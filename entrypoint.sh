@@ -1,18 +1,19 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -e
 
-echo "Running database setup..."
-python -c "from app import app, db; from models import *; app.app_context().push(); db.create_all()"
+echo "Starting Cryptoparcel..."
 
-APP_MODULE=${APP_MODULE:-"wsgi:application"}
-WORKERS=${WORKERS:-"3"}
-THREADS=${THREADS:-"2"}
-BIND=${BIND:-"0.0.0.0:8000"}
+# Render provides the port number in the $PORT variable
+PORT=${PORT:-10000}
 
-echo "Starting Gunicorn: $APP_MODULE"
-exec gunicorn "$APP_MODULE" \
-  --workers "$WORKERS" \
-  --threads "$THREADS" \
-  --bind "$BIND" \
-  --timeout 90 \
-  --access-logfile '-' --error-logfile '-'
+echo "Using port: $PORT"
+
+echo "Starting Gunicorn..."
+exec gunicorn wsgi:application \
+    --bind 0.0.0.0:$PORT \
+    --workers 3 \
+    --threads 2 \
+    --timeout 120 \
+    --log-level info \
+    --access-logfile '-' \
+    --error-logfile '-'
