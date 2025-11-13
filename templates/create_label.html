@@ -1,1 +1,23 @@
-{% extends 'base.html' %}{% block content %}Create label form{% endblock %}
+
+{% extends 'base.html' %}
+{% block title %}Create Label — CryptoParcel{% endblock %}
+{% block content %}
+<h2>Create a Shipping Label</h2>
+<form method="POST" class="card form">
+  <label>Carrier</label>
+  <select name="carrier" required>
+    <option>USPS</option><option>UPS</option><option>FedEx</option>
+  </select>
+  <label>Service</label>
+  <select name="service" required>
+    <option>Ground</option><option>2-Day</option><option>Overnight</option>
+  </select>
+  <label>Weight (oz)</label>
+  <input type="number" step="0.1" name="weight_oz" required>
+  <label>From Address</label>
+  <textarea name="from_address" required></textarea>
+  <label>To Address</label>
+  <textarea name="to_address" required></textarea>
+  <button class="btn primary">Create & Pay</button>
+</form>
+{% endblock %}

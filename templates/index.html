@@ -1,1 +1,10 @@
-{% extends 'base.html' %}{% block content %}Index{% endblock %}
+
+{% extends 'base.html' %}
+{% block title %}CryptoParcel — Buy Labels with Crypto{% endblock %}
+{% block content %}
+<div class="hero">
+  <h1>Buy shipping labels with crypto</h1>
+  <p>Fast. Automated. Secure. USPS, UPS, FedEx.</p>
+  <a href="{{ url_for('register') }}" class="btn primary">Get Started</a>
+</div>
+{% endblock %}

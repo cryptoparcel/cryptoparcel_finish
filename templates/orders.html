@@ -1,1 +1,15 @@
-{% extends 'base.html' %}{% block content %}Orders{% endblock %}
+
+{% extends 'base.html' %}
+{% block title %}Orders — CryptoParcel{% endblock %}
+{% block content %}
+<h2>All Orders</h2>
+<div class="grid">
+{% for order in orders %}
+  <div class="card">
+    <h4>Order #{{ order.id }}</h4>
+    <p>Status: {{ order.status }}</p>
+    <a class="btn" href="{{ url_for('order_detail', order_id=order.id) }}">View</a>
+  </div>
+{% endfor %}
+</div>
+{% endblock %}
