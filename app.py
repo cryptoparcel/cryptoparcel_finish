@@ -1,47 +1,80 @@
 from flask import (
-    Flask,
-    render_template,
-    redirect,
-    url_for,
-    request,
-    flash,
-    send_file,
-    jsonify,
+    Flask, render_template, request, redirect, url_for, flash,
+    send_file, jsonify
 )
-from flask_sqlalchemy import SQLAlchemy
 from flask_login import (
-    LoginManager,
-    login_user,
-    logout_user,
-    login_required,
-    current_user,
+    LoginManager, login_user, logout_user,
+    login_required, current_user
 )
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime
-from io import BytesIO
-import os
-import json
-import hmac
-import hashlib
-import requests
+from dotenv import load_dotenv
+import os, io, requests, hmac, hashlib
 
 from config import Config
 from label_generator import generate_shipping_label_pdf
 
-db = SQLAlchemy()
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+
+load_dotenv()
+
+# Import database + models
+from models import db, User, Order, Payment
+
 login_manager = LoginManager()
 login_manager.login_view = "login"
 
+# Rate limiter
+limiter = Limiter(get_remote_address, storage_uri="memory://")
 
+
+# -------------------------------------------------------------------------
+# Helper: Price calculation (placeholder until we add real carrier APIs)
+# -------------------------------------------------------------------------
+def calculate_label_price(carrier, service, weight_oz):
+    """
+    Simple placeholder rate logic.
+    Later replaced with API calls (USPS, UPS, FedEx).
+    """
+    base_price = 3.00
+    per_oz = 0.10
+
+    fast_keywords = ["Express", "Overnight", "Priority", "Next Day", "2Day"]
+    if any(k.lower() in service.lower() for k in fast_keywords):
+        base_price += 2.00
+
+    return round(base_price + weight_oz * per_oz, 2)
+
+
+# -------------------------------------------------------------------------
+# App Factory
+# -------------------------------------------------------------------------
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
 
     db.init_app(app)
     login_manager.init_app(app)
+    limiter.init_app(app)
+
+    # Security headers
+    @app.after_request
+    def add_headers(response):
+        response.headers.setdefault("X-Frame-Options", "DENY")
+        response.headers.setdefault("X-Content-Type-Options", "nosniff")
+        response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+        csp = (
+            "default-src 'self'; "
+            "script-src 'self'; "
+            "style-src 'self' 'unsafe-inline'; "
+            "img-src 'self' data:; "
+            "frame-ancestors 'none'; "
+        )
+        response.headers.setdefault("Content-Security-Policy", csp)
+        return response
 
     with app.app_context():
-        from models import User, Order, Payment  # noqa: F401
+        db.create_all()
 
     register_routes(app)
     return app
@@ -49,84 +82,28 @@ def create_app():
 
 @login_manager.user_loader
 def load_user(user_id):
-    from models import User
-    try:
-        return User.query.get(int(user_id))
-    except Exception:
-        return None
+    return User.query.get(int(user_id))
 
 
-def create_nowpayments_invoice(order, pay_currency="btc"):
-    if not Config.NOWPAYMENTS_API_KEY:
-        raise RuntimeError("NOWPayments API key is not configured")
-
-    base_url = Config.NOWPAYMENTS_BASE_URL.rstrip("/")
-    endpoint = f"{base_url}/v1/invoice"
-
-    success_url = url_for("payment_success", order_id=order.id, _external=True)
-    cancel_url = url_for("payment_cancel", order_id=order.id, _external=True)
-    ipn_url = url_for("nowpayments_ipn", _external=True)
-
-    payload = {
-        "price_amount": float(order.amount_usd),
-        "price_currency": "usd",
-        "order_id": str(order.id),
-        "order_description": f"CryptoParcel shipping label #{order.id}",
-        "ipn_callback_url": ipn_url,
-        "success_url": success_url,
-        "cancel_url": cancel_url,
-    }
-
-    headers = {
-        "x-api-key": Config.NOWPAYMENTS_API_KEY,
-        "Content-Type": "application/json",
-    }
-
-    resp = requests.post(endpoint, headers=headers, json=payload, timeout=30)
-    if resp.status_code >= 400:
-        raise RuntimeError(f"NOWPayments error: {resp.status_code} {resp.text}")
-
-    data = resp.json()
-    if "invoice_url" not in data:
-        raise RuntimeError(f"NOWPayments: invoice_url not in response: {data}")
-
-    return data
-
-
-def verify_nowpayments_signature(raw_body: str, signature: str) -> bool:
-    if not Config.NOWPAYMENTS_IPN_SECRET:
-        return False
-
-    try:
-        data = json.loads(raw_body or "{}")
-    except ValueError:
-        return False
-
-    sorted_body = json.dumps(data, sort_keys=True, separators=(",", ":"))
-    computed = hmac.new(
-        Config.NOWPAYMENTS_IPN_SECRET.encode("utf-8"),
-        sorted_body.encode("utf-8"),
-        hashlib.sha512,
-    ).hexdigest()
-
-    return hmac.compare_digest(computed, signature or "")
-
-
+# -------------------------------------------------------------------------
+# Routes
+# -------------------------------------------------------------------------
 def register_routes(app):
-    from models import User, Order, Payment
-
-    @app.route("/health")
-    def health():
-        return {"status": "ok"}, 200
 
     @app.route("/")
     def index():
         return render_template("index.html")
 
+    @app.route("/health")
+    def health():
+        return jsonify({"status": "ok"})
+
+    # ---------------------- REGISTER --------------------------
     @app.route("/register", methods=["GET", "POST"])
+    @limiter.limit("5 per minute")
     def register():
         if request.method == "POST":
-            email = request.form.get("email", "").strip().lower()
+            email = request.form.get("email", "").lower()
             password = request.form.get("password", "")
             confirm = request.form.get("confirm", "")
 
@@ -134,96 +111,167 @@ def register_routes(app):
                 flash("Email and password are required.", "error")
                 return redirect(url_for("register"))
 
-            if len(password) < 8:
-                flash("Password must be at least 8 characters.", "error")
-                return redirect(url_for("register"))
-
             if password != confirm:
                 flash("Passwords do not match.", "error")
                 return redirect(url_for("register"))
 
             if User.query.filter_by(email=email).first():
-                flash("Email is already registered.", "error")
+                flash("Email already registered.", "error")
                 return redirect(url_for("register"))
 
-            hashed = generate_password_hash(password)
-            user = User(email=email, password_hash=hashed)
+            user = User(email=email, password_hash=generate_password_hash(password))
             db.session.add(user)
             db.session.commit()
-            flash("Account created. Please log in.", "success")
+
+            flash("Account created!", "success")
             return redirect(url_for("login"))
 
         return render_template("auth/register.html")
 
+    # ---------------------- LOGIN --------------------------
     @app.route("/login", methods=["GET", "POST"])
+    @limiter.limit("10 per minute")
     def login():
         if request.method == "POST":
-            email = request.form.get("email", "").strip().lower()
+            email = request.form.get("email", "").lower()
             password = request.form.get("password", "")
+
             user = User.query.filter_by(email=email).first()
             if not user or not check_password_hash(user.password_hash, password):
                 flash("Invalid email or password.", "error")
                 return redirect(url_for("login"))
 
             login_user(user)
-            flash("Welcome back!", "success")
             return redirect(url_for("dashboard"))
 
         return render_template("auth/login.html")
 
+    # ---------------------- LOGOUT --------------------------
     @app.route("/logout")
-    @login_required
     def logout():
         logout_user()
-        flash("Logged out.", "success")
         return redirect(url_for("index"))
 
+    # ---------------------- DASHBOARD --------------------------
     @app.route("/dashboard")
     @login_required
     def dashboard():
-        orders = (
-            Order.query.filter_by(user_id=current_user.id)
-            .order_by(Order.created_at.desc())
-            .limit(5)
-            .all()
-        )
+        orders = Order.query.filter_by(user_id=current_user.id).order_by(Order.id.desc()).limit(10).all()
         return render_template("dashboard.html", orders=orders)
 
+    # ---------------------- ORDERS --------------------------
     @app.route("/orders")
     @login_required
     def orders():
-        orders = (
-            Order.query.filter_by(user_id=current_user.id)
-            .order_by(Order.created_at.desc())
-            .all()
-        )
+        orders = Order.query.filter_by(user_id=current_user.id).order_by(Order.id.desc()).all()
         return render_template("orders.html", orders=orders)
 
+    # ---------------------- WALLET --------------------------
+    @app.route("/wallet")
+    @login_required
+    def wallet():
+        topups = (
+            Payment.query.filter_by(user_id=current_user.id, type="topup")
+            .order_by(Payment.created_at.desc())
+            .limit(20)
+            .all()
+        )
+        return render_template("wallet.html", balance=current_user.balance_usd, topups=topups)
+
+    @app.route("/wallet/topup", methods=["GET", "POST"])
+    @login_required
+    def wallet_topup():
+        if request.method == "POST":
+            amount_str = request.form.get("amount_usd", "0")
+            try:
+                amount = float(amount_str)
+            except ValueError:
+                flash("Invalid amount.", "error")
+                return redirect(url_for("wallet_topup"))
+
+            if amount <= 0 or amount > 5000:
+                flash("Amount must be between 1–5000 USD.", "error")
+                return redirect(url_for("wallet_topup"))
+
+            # Create a pending Payment entry
+            payment = Payment(
+                user_id=current_user.id,
+                type="topup",
+                amount_usd=amount,
+                currency="crypto",
+                status="waiting",
+            )
+            db.session.add(payment)
+            db.session.commit()
+
+            # Create invoice
+            invoice = create_topup_invoice(payment)
+            payment.provider = "nowpayments"
+            payment.provider_payment_id = invoice.get("id")
+            db.session.commit()
+
+            return redirect(invoice.get("invoice_url"))
+
+        return render_template("wallet_topup.html")
+
+    # -------------------------------------------------------------------------
+    # LABEL CREATION (Wallet-first logic + Crypto fallback)
+    # -------------------------------------------------------------------------
     @app.route("/create-label", methods=["GET", "POST"])
     @login_required
     def create_label():
         if request.method == "POST":
-            carrier = request.form.get("carrier") or "USPS"
-            service = request.form.get("service") or "Ground"
-            weight_oz = request.form.get("weight_oz") or "0"
-            from_address = request.form.get("from_address") or ""
-            to_address = request.form.get("to_address") or ""
-            reference = request.form.get("reference")
+            service = request.form.get("service", "USPS First-Class")
 
+            # Infer carrier
+            if service.startswith("USPS"):
+                carrier = "USPS"
+            elif service.startswith("UPS"):
+                carrier = "UPS"
+            elif service.startswith("FedEx"):
+                carrier = "FedEx"
+            else:
+                carrier = "Custom"
+
+            # Weight
             try:
-                weight_oz = float(weight_oz)
+                weight_oz = float(request.form.get("weight_oz", "0"))
             except ValueError:
                 flash("Invalid weight.", "error")
                 return redirect(url_for("create_label"))
 
-            if not from_address.strip() or not to_address.strip():
-                flash("From and To address are required.", "error")
+            if weight_oz <= 0:
+                flash("Weight must be greater than 0.", "error")
                 return redirect(url_for("create_label"))
 
-            base_price = 3.00
-            per_oz = 0.10
-            amount_usd = round(base_price + weight_oz * per_oz, 2)
+            # Structured address
+            fa_name = request.form.get("from_name", "")
+            fa_street1 = request.form.get("from_street1", "")
+            fa_city = request.form.get("from_city", "")
+            fa_state = request.form.get("from_state", "")
+            fa_zip = request.form.get("from_zip", "")
 
+            ta_name = request.form.get("to_name", "")
+            ta_street1 = request.form.get("to_street1", "")
+            ta_city = request.form.get("to_city", "")
+            ta_state = request.form.get("to_state", "")
+            ta_zip = request.form.get("to_zip", "")
+
+            if not all([fa_name, fa_street1, fa_city, fa_state, fa_zip]):
+                flash("From address incomplete.", "error")
+                return redirect(url_for("create_label"))
+
+            if not all([ta_name, ta_street1, ta_city, ta_state, ta_zip]):
+                flash("To address incomplete.", "error")
+                return redirect(url_for("create_label"))
+
+            from_address = f"{fa_name}\n{fa_street1}\n{fa_city}, {fa_state} {fa_zip}\nUnited States"
+            to_address = f"{ta_name}\n{ta_street1}\n{ta_city}, {ta_state} {ta_zip}\nUnited States"
+
+            # Calculate price
+            amount_usd = calculate_label_price(carrier, service, weight_oz)
+
+            # Create order
             order = Order(
                 user_id=current_user.id,
                 carrier=carrier,
@@ -231,153 +279,161 @@ def register_routes(app):
                 weight_oz=weight_oz,
                 from_address=from_address,
                 to_address=to_address,
-                reference=reference,
                 amount_usd=amount_usd,
                 status="pending_payment",
             )
             db.session.add(order)
             db.session.commit()
 
-            try:
-                invoice = create_nowpayments_invoice(order)
-            except Exception:
-                order.status = "payment_error"
-                db.session.commit()
-                flash(
-                    "There was a problem creating the crypto payment. "
-                    "Please try again or contact support.",
-                    "error",
+            # WALLET-FIRST LOGIC
+            if current_user.balance_usd >= amount_usd:
+                current_user.balance_usd -= amount_usd
+                order.status = "paid"
+
+                wallet_payment = Payment(
+                    order_id=order.id,
+                    user_id=current_user.id,
+                    type="label",
+                    provider="wallet",
+                    provider_payment_id=None,
+                    amount_usd=amount_usd,
+                    currency="usd",
+                    status="paid",
                 )
+                db.session.add(wallet_payment)
+                db.session.commit()
+
+                flash("Label paid with your wallet balance!", "success")
                 return redirect(url_for("order_detail", order_id=order.id))
+
+            # CRYPTO FALLBACK
+            invoice = create_nowpayments_invoice(order)
 
             payment = Payment(
                 order_id=order.id,
+                user_id=current_user.id,
+                type="label",
                 provider="nowpayments",
-                provider_payment_id=str(invoice.get("payment_id") or invoice.get("id") or ""),
-                amount_usd=order.amount_usd,
+                provider_payment_id=str(invoice.get("id")),
+                amount_usd=amount_usd,
                 currency="crypto",
                 status="waiting",
             )
             db.session.add(payment)
             db.session.commit()
 
-            invoice_url = invoice["invoice_url"]
-            return redirect(invoice_url)
+            return redirect(invoice["invoice_url"])
 
         return render_template("create_label.html")
 
+    # ---------------------- ORDER DETAIL --------------------------
     @app.route("/orders/<int:order_id>")
     @login_required
     def order_detail(order_id):
-        order = Order.query.filter_by(id=order_id, user_id=current_user.id).first_or_404()
+        order = Order.query.get_or_404(order_id)
+        if order.user_id != current_user.id:
+            flash("Unauthorized", "error")
+            return redirect(url_for("orders"))
         return render_template("order_detail.html", order=order)
 
+    # ---------------------- DOWNLOAD LABEL --------------------------
     @app.route("/orders/<int:order_id>/label")
     @login_required
     def download_label(order_id):
-        order = Order.query.filter_by(id=order_id, user_id=current_user.id).first_or_404()
+        order = Order.query.get_or_404(order_id)
+        if order.user_id != current_user.id:
+            flash("Unauthorized", "error")
+            return redirect(url_for("orders"))
 
-        if order.status not in ("paid", "finished", "confirmed"):
-            flash(
-                "Your payment is still processing. The label will be available once "
-                "NOWPayments confirms the payment.",
-                "error",
-            )
-            return redirect(url_for("order_detail", order_id=order.id))
+        if order.status != "paid":
+            flash("Payment required.", "error")
+            return redirect(url_for("orders"))
 
         pdf_bytes = generate_shipping_label_pdf(order)
         return send_file(
-            BytesIO(pdf_bytes),
+            io.BytesIO(pdf_bytes),
             mimetype="application/pdf",
             as_attachment=True,
             download_name=f"label_{order.id}.pdf",
         )
 
-    @app.route("/payment/success/<int:order_id>")
-    def payment_success(order_id):
-        order = Order.query.get_or_404(order_id)
-        return render_template("payment_success.html", order=order)
-
-    @app.route("/payment/cancel/<int:order_id>")
-    def payment_cancel(order_id):
-        order = Order.query.get_or_404(order_id)
-        if order.status == "pending_payment":
-            order.status = "cancelled"
-            db.session.commit()
-        flash("Payment cancelled.", "error")
-        return render_template("payment_cancel.html", order=order)
-
+    # ---------------------- PAYMENT CALLBACK --------------------------
     @app.route("/nowpayments/ipn", methods=["POST"])
+    @limiter.limit("30 per minute")
     def nowpayments_ipn():
-        raw_body = request.get_data(as_text=True)
+        raw = request.data
         sig = request.headers.get("x-nowpayments-sig", "")
 
-        if not verify_nowpayments_signature(raw_body, sig):
-            return "invalid signature", 400
+        if not verify_nowpayments_signature(raw, sig):
+            return "invalid", 400
 
-        try:
-            data = json.loads(raw_body)
-        except ValueError:
-            return "invalid json", 400
-
-        order_id = data.get("order_id")
+        data = request.json
+        payment_id = data.get("payment_id")
         payment_status = data.get("payment_status")
-        price_amount = data.get("price_amount")
-        pay_currency = data.get("pay_currency")
-        payment_id = data.get("payment_id") or data.get("id")
 
-        if not order_id:
-            return "missing order_id", 400
-
-        try:
-            order_id_int = int(order_id)
-        except ValueError:
-            return "bad order_id", 400
-
-        order = Order.query.get(order_id_int)
-        if not order:
-            return "order not found", 404
-
-        payment = (
-            Payment.query.filter_by(order_id=order.id, provider="nowpayments")
-            .order_by(Payment.created_at.desc())
-            .first()
-        )
+        payment = Payment.query.filter_by(provider_payment_id=str(payment_id)).first()
         if not payment:
-            payment = Payment(
-                order_id=order.id,
-                provider="nowpayments",
-                provider_payment_id=str(payment_id or ""),
-                amount_usd=price_amount or order.amount_usd,
-                currency=pay_currency or "crypto",
-            )
-            db.session.add(payment)
+            return "payment not found", 404
 
-        payment.status = payment_status or payment.status
-        payment.currency = pay_currency or payment.currency
-        if price_amount:
-            try:
-                payment.amount_usd = float(price_amount)
-            except ValueError:
-                pass
+        if payment.type == "topup":
+            if payment_status in ["confirmed", "finished", "paid"]:
+                payment.status = "paid"
+                current_user_obj = User.query.get(payment.user_id)
+                current_user_obj.balance_usd += payment.amount_usd
+                db.session.commit()
 
-        success_statuses = {"finished", "confirmed", "paid"}
-        pending_statuses = {"waiting", "confirming", "sending", "partially_paid"}
+        elif payment.type == "label":
+            if payment_status in ["confirmed", "finished", "paid"]:
+                payment.status = "paid"
+                order = Order.query.get(payment.order_id)
+                order.status = "paid"
+                db.session.commit()
 
-        if payment_status in success_statuses:
-            order.status = "paid"
-        elif payment_status in pending_statuses:
-            if order.status not in ("paid", "payment_error"):
-                order.status = "pending_payment"
-        else:
-            if order.status != "paid":
-                order.status = "payment_failed"
+        return "ok", 200
 
-        db.session.commit()
-        return jsonify({"ok": True})
+    # ---------------------- API HELPERS --------------------------
+    def verify_nowpayments_signature(raw_body, signature):
+        secret = os.getenv("NOWPAYMENTS_IPN_SECRET", "")
+        expected = hmac.new(secret.encode(), raw_body, hashlib.sha512).hexdigest()
+        return hmac.compare_digest(expected, signature)
+
+    def create_nowpayments_invoice(order):
+        api_key = os.getenv("NOWPAYMENTS_API_KEY")
+        url = f"{os.getenv('NOWPAYMENTS_BASE_URL')}/v1/invoice"
+
+        payload = {
+            "price_amount": order.amount_usd,
+            "price_currency": "usd",
+            "order_id": order.id,
+            "pay_currency": "btc",
+            "success_url": url_for("order_detail", order_id=order.id, _external=True),
+            "cancel_url": url_for("orders", _external=True),
+        }
+
+        r = requests.post(url, json=payload, headers={"x-api-key": api_key})
+        return r.json()
+
+    def create_topup_invoice(payment):
+        api_key = os.getenv("NOWPAYMENTS_API_KEY")
+        url = f"{os.getenv('NOWPAYMENTS_BASE_URL')}/v1/invoice"
+
+        payload = {
+            "price_amount": payment.amount_usd,
+            "price_currency": "usd",
+            "order_id": f"topup-{payment.id}",
+            "pay_currency": "btc",
+            "success_url": url_for("wallet", _external=True),
+            "cancel_url": url_for("wallet", _external=True),
+        }
+
+        r = requests.post(url, json=payload, headers={"x-api-key": api_key})
+        return r.json()
 
 
+# -------------------------------------------------------------------------
+# Run app
+# -------------------------------------------------------------------------
 app = create_app()
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.getenv("PORT", 8000)), debug=True)
+    app.run(host="0.0.0.0", port=8000, debug=True)

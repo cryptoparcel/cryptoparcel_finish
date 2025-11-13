@@ -1,23 +1,123 @@
-
 {% extends 'base.html' %}
-{% block title %}Create Label — CryptoParcel{% endblock %}
+{% block title %}Create shipment — CryptoParcel{% endblock %}
 {% block content %}
-<h2>Create a Shipping Label</h2>
-<form method="POST" class="card form">
-  <label>Carrier</label>
-  <select name="carrier" required>
-    <option>USPS</option><option>UPS</option><option>FedEx</option>
-  </select>
-  <label>Service</label>
-  <select name="service" required>
-    <option>Ground</option><option>2-Day</option><option>Overnight</option>
-  </select>
-  <label>Weight (oz)</label>
-  <input type="number" step="0.1" name="weight_oz" required>
-  <label>From Address</label>
-  <textarea name="from_address" required></textarea>
-  <label>To Address</label>
-  <textarea name="to_address" required></textarea>
-  <button class="btn primary">Create & Pay</button>
-</form>
+<h2>Create shipment</h2>
+<div class="layout-two-cols">
+  <div class="card">
+    <h3>Services</h3>
+    <p class="muted small">Choose any USPS, UPS, or FedEx service level. Pricing is estimated for now.</p>
+    <ul class="muted small">
+      <li>USPS: First-Class, Priority, Priority Express, Media Mail, Parcel Select</li>
+      <li>UPS: Ground, 3 Day Select, 2nd Day Air, Next Day Air Saver, Next Day Air</li>
+      <li>FedEx: Ground, Home Delivery, Express Saver, 2Day, 2Day AM, Standard Overnight, Priority Overnight</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>Shipment details</h3>
+    <form method="POST" class="ship-form">
+      <div class="grid-2">
+        <div>
+          <label>Weight (oz)</label>
+          <input type="number" name="weight_oz" min="0.1" step="0.1" required>
+        </div>
+        <div>
+          <label>Service</label>
+          <select name="service" required>
+            <optgroup label="USPS">
+              <option value="USPS First-Class">First-Class</option>
+              <option value="USPS Priority">Priority Mail</option>
+              <option value="USPS Priority Express">Priority Mail Express</option>
+              <option value="USPS Media Mail">Media Mail</option>
+              <option value="USPS Parcel Select">Parcel Select</option>
+            </optgroup>
+            <optgroup label="UPS">
+              <option value="UPS Ground">Ground</option>
+              <option value="UPS 3 Day Select">3 Day Select</option>
+              <option value="UPS 2nd Day Air">2nd Day Air</option>
+              <option value="UPS Next Day Air Saver">Next Day Air Saver</option>
+              <option value="UPS Next Day Air">Next Day Air</option>
+            </optgroup>
+            <optgroup label="FedEx">
+              <option value="FedEx Ground">Ground</option>
+              <option value="FedEx Home Delivery">Home Delivery</option>
+              <option value="FedEx Express Saver">Express Saver</option>
+              <option value="FedEx 2Day">2Day</option>
+              <option value="FedEx 2Day AM">2Day AM</option>
+              <option value="FedEx Standard Overnight">Standard Overnight</option>
+              <option value="FedEx Priority Overnight">Priority Overnight</option>
+            </optgroup>
+          </select>
+        </div>
+      </div>
+
+      <h3 class="mt">From address</h3>
+      <div class="grid-2">
+        <div>
+          <label>Full name</label>
+          <input type="text" name="from_name" required>
+        </div>
+        <div>
+          <label>Country</label>
+          <input type="text" name="from_country" value="United States">
+        </div>
+      </div>
+      <label>Street address</label>
+      <input type="text" name="from_street1" required>
+      <label>Street address 2 (optional)</label>
+      <input type="text" name="from_street2">
+      <div class="grid-3">
+        <div>
+          <label>City</label>
+          <input type="text" name="from_city" required>
+        </div>
+        <div>
+          <label>State</label>
+          <input type="text" name="from_state" required>
+        </div>
+        <div>
+          <label>ZIP</label>
+          <input type="text" name="from_zip" required>
+        </div>
+      </div>
+
+      <h3 class="mt">To address</h3>
+      <div class="grid-2">
+        <div>
+          <label>Full name</label>
+          <input type="text" name="to_name" required>
+        </div>
+        <div>
+          <label>Country</label>
+          <input type="text" name="to_country" value="United States">
+        </div>
+      </div>
+      <label>Street address</label>
+      <input type="text" name="to_street1" required>
+      <label>Street address 2 (optional)</label>
+      <input type="text" name="to_street2">
+      <div class="grid-3">
+        <div>
+          <label>City</label>
+          <input type="text" name="to_city" required>
+        </div>
+        <div>
+          <label>State</label>
+          <input type="text" name="to_state" required>
+        </div>
+        <div>
+          <label>ZIP</label>
+          <input type="text" name="to_zip" required>
+        </div>
+      </div>
+
+      <label class="mt">Reference (optional)</label>
+      <input type="text" name="reference">
+
+      <div class="form-actions">
+        <button class="btn primary" type="submit">Create label & pay with crypto</button>
+      </div>
+    </form>
+  </div>
+</div>
 {% endblock %}

@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block title %}Top up wallet — CryptoParcel{% endblock %}
+{% block content %}
+<div class="card form-card">
+  <h2>Top up wallet</h2>
+  <form method="POST">
+    <label>Amount (USD)</label>
+    <input type="number" name="amount_usd" min="1" step="0.01" required>
+    <p class="muted">You will be redirected to pay with crypto via NOWPayments.</p>
+    <button class="btn primary" type="submit">Create crypto invoice</button>
+  </form>
+</div>
+{% endblock %}

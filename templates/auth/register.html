@@ -1,15 +1,17 @@
-
 {% extends 'base.html' %}
-{% block title %}Register — CryptoParcel{% endblock %}
+{% block title %}Sign up — CryptoParcel{% endblock %}
 {% block content %}
-<h2>Create Account</h2>
-<form method="POST" class="card form">
-  <label>Email</label>
-  <input type="email" name="email" required>
-  <label>Password</label>
-  <input type="password" name="password" required>
-  <label>Confirm Password</label>
-  <input type="password" name="confirm" required>
-  <button class="btn primary">Sign Up</button>
-</form>
+<div class="card form-card">
+  <h2>Create an account</h2>
+  <form method="POST">
+    <label>Email</label>
+    <input type="email" name="email" required>
+    <label>Password</label>
+    <input type="password" name="password" required>
+    <label>Confirm password</label>
+    <input type="password" name="confirm" required>
+    <button class="btn primary" type="submit">Sign up</button>
+  </form>
+  <p class="muted">Already have an account? <a href="{{ url_for('login') }}">Log in</a></p>
+</div>
 {% endblock %}

@@ -1,15 +1,35 @@
-
 {% extends 'base.html' %}
 {% block title %}Orders — CryptoParcel{% endblock %}
 {% block content %}
-<h2>All Orders</h2>
-<div class="grid">
-{% for order in orders %}
-  <div class="card">
-    <h4>Order #{{ order.id }}</h4>
-    <p>Status: {{ order.status }}</p>
-    <a class="btn" href="{{ url_for('order_detail', order_id=order.id) }}">View</a>
+<h2>Your orders</h2>
+{% if orders %}
+  <div class="card table-card">
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Carrier</th>
+          <th>Service</th>
+          <th>Amount</th>
+          <th>Status</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for o in orders %}
+          <tr>
+            <td>#{{ o.id }}</td>
+            <td>{{ o.carrier }}</td>
+            <td>{{ o.service }}</td>
+            <td>${{ '%.2f'|format(o.amount_usd) }}</td>
+            <td>{{ o.status }}</td>
+            <td><a href="{{ url_for('order_detail', order_id=o.id) }}">View</a></td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
-{% endfor %}
-</div>
+{% else %}
+  <p class="muted">No orders yet.</p>
+{% endif %}
 {% endblock %}

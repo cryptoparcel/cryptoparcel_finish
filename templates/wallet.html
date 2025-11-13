@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block title %}Wallet — CryptoParcel{% endblock %}
+{% block content %}
+<h2>Wallet</h2>
+<div class="wallet-layout">
+  <div class="card">
+    <h3>Current balance</h3>
+    <p class="stat-amount">${{ '%.2f'|format(balance or 0) }}</p>
+    <a href="{{ url_for('wallet_topup') }}" class="btn primary">Top up with crypto</a>
+  </div>
+  <div class="card table-card">
+    <h3>Recent top-ups</h3>
+    {% if topups %}
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Amount</th>
+            <th>Currency</th>
+            <th>Status</th>
+            <th>Time</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in topups %}
+            <tr>
+              <td>#{{ p.id }}</td>
+              <td>${{ '%.2f'|format(p.amount_usd) }}</td>
+              <td>{{ p.currency }}</td>
+              <td>{{ p.status }}</td>
+              <td>{{ p.created_at }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="muted">No top-ups yet.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

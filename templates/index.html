@@ -1,10 +1,27 @@
-
 {% extends 'base.html' %}
-{% block title %}CryptoParcel — Buy Labels with Crypto{% endblock %}
+{% block title %}CryptoParcel — Ship with Crypto{% endblock %}
 {% block content %}
-<div class="hero">
-  <h1>Buy shipping labels with crypto</h1>
-  <p>Fast. Automated. Secure. USPS, UPS, FedEx.</p>
-  <a href="{{ url_for('register') }}" class="btn primary">Get Started</a>
-</div>
+<section class="hero">
+  <div class="hero-main">
+    <h1>Ship with crypto in under 2 minutes.</h1>
+    <p>Buy USPS, UPS, and FedEx labels using Bitcoin and other cryptocurrencies. No carrier accounts required.</p>
+    <div class="hero-actions">
+      {% if current_user.is_authenticated %}
+        <a href="{{ url_for('create_label') }}" class="btn primary">Create Shipment</a>
+        <a href="{{ url_for('wallet') }}" class="btn ghost">View Wallet</a>
+      {% else %}
+        <a href="{{ url_for('register') }}" class="btn primary">Get Started</a>
+        <a href="{{ url_for('login') }}" class="btn ghost">Log In</a>
+      {% endif %}
+    </div>
+  </div>
+  <div class="hero-sidecard">
+    <h3>How it works</h3>
+    <ol>
+      <li>Create your label and enter addresses.</li>
+      <li>Pay securely with crypto via NOWPayments.</li>
+      <li>Download your ready-to-print label.</li>
+    </ol>
+  </div>
+</section>
 {% endblock %}
