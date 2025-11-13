@@ -18,6 +18,11 @@ COPY . .
 # Make entrypoint executable
 RUN chmod +x entrypoint.sh
 
+# Render uses port 10000 for Docker services
 EXPOSE 10000
+
+# Healthcheck so Render knows service is running
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+  CMD curl -f http://localhost:${PORT:-10000}/health || exit 1
 
 CMD ["bash", "entrypoint.sh"]
