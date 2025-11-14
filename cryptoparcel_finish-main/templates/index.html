@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block title %}CryptoParcel — Buy Labels with Crypto{% endblock %}
+{% block content %}
+<div class="hero">
+  <h1>Buy USPS, UPS & FedEx labels with crypto</h1>
+  <p>Top up your wallet with Bitcoin, create a label in under 2 minutes, and download a ready‑to‑ship label.</p>
+  {% if current_user.is_authenticated %}
+    <a href="{{ url_for('create_label') }}" class="btn primary">Create a label</a>
+  {% else %}
+    <a href="{{ url_for('register') }}" class="btn primary">Get started</a>
+  {% endif %}
+</div>
+
+<div class="hero-steps grid">
+  <div class="card">
+    <h3>1. Load your wallet</h3>
+    <p>Use NOWPayments to top up your CryptoParcel wallet with BTC and other supported coins.</p>
+  </div>
+  <div class="card">
+    <h3>2. Enter shipment details</h3>
+    <p>Add from / to addresses, pick your carrier and service, and see the label cost in USD.</p>
+  </div>
+  <div class="card">
+    <h3>3. Pay & download label</h3>
+    <p>Pay instantly from your wallet balance or via crypto invoice, then download your label PDF.</p>
+  </div>
+</div>
+{% endblock %}

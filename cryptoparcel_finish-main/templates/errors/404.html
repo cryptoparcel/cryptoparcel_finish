@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block title %}Not Found — CryptoParcel{% endblock %}
+{% block content %}
+<div class="card">
+  <h2>Page not found</h2>
+  <p>The page you requested does not exist.</p>
+  <a class="btn" href="{{ url_for('index') }}">Back to home</a>
+</div>
+{% endblock %}
