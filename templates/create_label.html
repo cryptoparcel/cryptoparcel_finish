@@ -1,176 +1,601 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>Create Label - CryptoParcel</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <meta charset="utf-8" />
+    <title>Create Shipping Label • CryptoParcel</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <style>
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            margin: 0;
+            padding: 0;
+            background: radial-gradient(circle at top, #0f172a 0, #020617 40%, #020617 100%);
+            color: #e5e7eb;
+        }
+
+        a {
+            color: #38bdf8;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .page-shell {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .top-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 24px;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.3);
+            backdrop-filter: blur(14px);
+            background: linear-gradient(to right, rgba(15, 23, 42, 0.95), rgba(15, 23, 42, 0.85));
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .brand-logo {
+            width: 26px;
+            height: 26px;
+            border-radius: 999px;
+            background: radial-gradient(circle at 30% 0, #38bdf8, #0f172a 60%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: 700;
+            color: #e5e7eb;
+        }
+
+        .brand-text {
+            font-weight: 600;
+            letter-spacing: 0.03em;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            font-size: 14px;
+        }
+
+        .nav-links a {
+            opacity: 0.85;
+        }
+
+        .nav-links a.active {
+            opacity: 1;
+            font-weight: 600;
+        }
+
+        .nav-balance-pill {
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: rgba(15, 118, 110, 0.2);
+            color: #a7f3d0;
+            font-size: 12px;
+            border: 1px solid rgba(45, 212, 191, 0.4);
+        }
+
+        .main {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            padding: 32px 16px 40px;
+        }
+
+        .layout-grid {
+            width: 100%;
+            max-width: 1160px;
+            display: grid;
+            grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+            gap: 24px;
+        }
+
+        @media (max-width: 900px) {
+            .layout-grid {
+                grid-template-columns: minmax(0, 1fr);
+            }
+        }
+
+        .card {
+            background: rgba(15, 23, 42, 0.96);
+            border-radius: 18px;
+            border: 1px solid rgba(148, 163, 184, 0.4);
+            padding: 20px 22px;
+            box-shadow:
+                0 18px 45px rgba(15, 23, 42, 0.9),
+                0 0 0 1px rgba(15, 23, 42, 0.8);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 18px;
+        }
+
+        .card-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #f9fafb;
+        }
+
+        .card-subtitle {
+            font-size: 13px;
+            color: #9ca3af;
+            margin-top: 4px;
+        }
+
+        .steps {
+            display: flex;
+            gap: 10px;
+            font-size: 11px;
+            color: #9ca3af;
+        }
+
+        .step-pill {
+            padding: 4px 8px;
+            border-radius: 999px;
+            border: 1px solid rgba(148, 163, 184, 0.6);
+        }
+
+        .step-pill.active {
+            border-color: #38bdf8;
+            background: radial-gradient(circle at top left, rgba(56, 189, 248, 0.2), transparent 55%);
+            color: #e5e7eb;
+        }
+
+        .section-title {
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: #9ca3af;
+            margin-bottom: 10px;
+        }
+
+        .field-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px 16px;
+        }
+
+        .field-grid-3 {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            gap: 12px 16px;
+        }
+
+        @media (max-width: 700px) {
+            .field-grid,
+            .field-grid-3 {
+                grid-template-columns: minmax(0, 1fr);
+            }
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        label {
+            font-size: 12px;
+            color: #d1d5db;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        select,
+        textarea {
+            padding: 8px 10px;
+            border-radius: 10px;
+            border: 1px solid rgba(55, 65, 81, 0.9);
+            background: rgba(15, 23, 42, 0.9);
+            color: #e5e7eb;
+            font-size: 13px;
+            outline: none;
+            width: 100%;
+        }
+
+        input::placeholder,
+        textarea::placeholder {
+            color: #6b7280;
+        }
+
+        textarea {
+            resize: vertical;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            border-color: #38bdf8;
+            box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.4);
+        }
+
+        .mini-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin: 12px 0 6px;
+        }
+
+        .badge {
+            font-size: 11px;
+            padding: 3px 8px;
+            border-radius: 999px;
+            border: 1px solid rgba(148, 163, 184, 0.6);
+            color: #9ca3af;
+        }
+
+        .badge.highlight {
+            border-color: #22c55e;
+            color: #bbf7d0;
+            background: rgba(22, 163, 74, 0.12);
+        }
+
+        .payment-methods {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 4px;
+        }
+
+        .payment-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .payment-select {
+            flex: 1;
+        }
+
+        .helper-text {
+            font-size: 11px;
+            color: #9ca3af;
+        }
+
+        .price-preview {
+            margin-top: 8px;
+            font-size: 13px;
+            color: #e5e7eb;
+        }
+
+        .price-amount {
+            font-weight: 600;
+            font-size: 16px;
+            color: #a5b4fc;
+        }
+
+        .actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 18px;
+        }
+
+        .btn {
+            border-radius: 999px;
+            padding: 8px 16px;
+            font-size: 13px;
+            font-weight: 500;
+            border: 1px solid transparent;
+            cursor: pointer;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border-color: rgba(148, 163, 184, 0.6);
+            color: #e5e7eb;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(30, 64, 175, 0.5);
+        }
+
+        .btn-primary {
+            background: linear-gradient(to right, #38bdf8, #6366f1);
+            border: none;
+            color: #0b1120;
+            box-shadow: 0 12px 25px rgba(37, 99, 235, 0.45);
+        }
+
+        .btn-primary:hover {
+            filter: brightness(1.05);
+        }
+
+        /* Right-side summary card */
+
+        .summary-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .summary-title {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .summary-body {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            font-size: 13px;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .summary-label {
+            color: #9ca3af;
+        }
+
+        .summary-value {
+            color: #e5e7eb;
+            font-weight: 500;
+        }
+
+        .summary-pill {
+            padding: 4px 8px;
+            border-radius: 999px;
+            border: 1px solid rgba(148, 163, 184, 0.5);
+            font-size: 11px;
+            color: #9ca3af;
+        }
+
+        .summary-footer {
+            border-top: 1px dashed rgba(55, 65, 81, 0.9);
+            margin-top: 14px;
+            padding-top: 10px;
+            font-size: 11px;
+            color: #6b7280;
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .summary-total-label {
+            color: #9ca3af;
+        }
+
+        .summary-total-amount {
+            font-size: 18px;
+            font-weight: 700;
+            color: #a5b4fc;
+        }
+
+        footer {
+            padding: 12px 24px 18px;
+            font-size: 11px;
+            color: #6b7280;
+            text-align: center;
+        }
+    </style>
 </head>
 <body>
-  <!-- Top nav -->
-  <header class="top-nav">
-    <div class="nav-left">
-      <a href="{{ url_for('dashboard') }}" class="logo">
-        <span class="logo-mark">฿</span> CryptoParcel
-      </a>
-    </div>
-    <nav class="nav-right">
-      <a href="{{ url_for('dashboard') }}">Dashboard</a>
-      <a href="{{ url_for('create_label') }}" class="active">Create Label</a>
-      <a href="{{ url_for('orders') }}">Orders</a>
-      <a href="{{ url_for('wallet') }}">Wallet</a>
-      <a href="{{ url_for('logout') }}">Logout</a>
-    </nav>
-  </header>
-
-  <main class="page page-narrow">
-    <h1 class="page-title">Create shipping label</h1>
-
-    <div class="sub-header">
-      <div>Fill in the shipment details and choose how you want to pay.</div>
-      <div class="wallet-pill">
-        Wallet balance:
-        <strong>${{ '%.2f'|format(balance or 0) }}</strong>
-      </div>
-    </div>
-
-    <!-- Flash messages -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        <div class="flash-list">
-          {% for category, message in messages %}
-            <div class="flash flash-{{ category }}">{{ message }}</div>
-          {% endfor %}
+<div class="page-shell">
+    <!-- Top nav -->
+    <header class="top-nav">
+        <div class="brand">
+            <div class="brand-logo">C</div>
+            <div class="brand-text">CryptoParcel</div>
         </div>
-      {% endif %}
-    {% endwith %}
-
-    <form method="post" class="card form-grid">
-      <!-- From address -->
-      <section class="form-section">
-        <h2>From address</h2>
-        <div class="field">
-          <label for="from_name">Name</label>
-          <input type="text" id="from_name" name="from_name" required>
+        <div class="nav-links">
+            <a href="{{ url_for('dashboard') }}">Dashboard</a>
+            <a href="{{ url_for('orders') }}">Orders</a>
+            <a href="{{ url_for('wallet') }}">Wallet</a>
+            <span class="nav-balance-pill">
+                Balance: ${{ '%.2f'|format(balance or 0.0) }}
+            </span>
         </div>
-        <div class="field">
-          <label for="from_street1">Street address</label>
-          <input type="text" id="from_street1" name="from_street1" required>
-        </div>
-        <div class="field-row">
-          <div class="field">
-            <label for="from_city">City</label>
-            <input type="text" id="from_city" name="from_city" required>
-          </div>
-          <div class="field">
-            <label for="from_state">State</label>
-            <input type="text" id="from_state" name="from_state" maxlength="2" required>
-          </div>
-          <div class="field">
-            <label for="from_zip">ZIP</label>
-            <input type="text" id="from_zip" name="from_zip" required>
-          </div>
-        </div>
-      </section>
+    </header>
 
-      <!-- To address -->
-      <section class="form-section">
-        <h2>To address</h2>
-        <div class="field">
-          <label for="to_name">Name</label>
-          <input type="text" id="to_name" name="to_name" required>
+    <!-- Main content -->
+    <main class="main">
+        <div class="layout-grid">
+            <!-- Left: big form -->
+            <form method="POST" action="{{ url_for('create_label') }}" class="card">
+                <div class="card-header">
+                    <div>
+                        <div class="card-title">Create shipping label</div>
+                        <div class="card-subtitle">
+                            Enter addresses, weight, and choose how you want to pay.
+                        </div>
+                    </div>
+                    <div class="steps">
+                        <span class="step-pill active">1. Details</span>
+                        <span class="step-pill">2. Pay</span>
+                        <span class="step-pill">3. Download</span>
+                    </div>
+                </div>
+
+                <!-- From address -->
+                <section style="margin-bottom: 18px;">
+                    <div class="section-title">From address</div>
+                    <div class="field-grid">
+                        <div class="form-group">
+                            <label for="from_name">Full name</label>
+                            <input type="text" id="from_name" name="from_name" placeholder="Sender name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="from_street1">Street address</label>
+                            <input type="text" id="from_street1" name="from_street1" placeholder="123 Main St" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="from_city">City</label>
+                            <input type="text" id="from_city" name="from_city" placeholder="Los Angeles" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="from_state">State</label>
+                            <input type="text" id="from_state" name="from_state" placeholder="CA" maxlength="2" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="from_zip">ZIP code</label>
+                            <input type="text" id="from_zip" name="from_zip" placeholder="90001" required>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- To address -->
+                <section style="margin-bottom: 18px;">
+                    <div class="section-title">To address</div>
+                    <div class="field-grid">
+                        <div class="form-group">
+                            <label for="to_name">Full name</label>
+                            <input type="text" id="to_name" name="to_name" placeholder="Recipient name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="to_street1">Street address</label>
+                            <input type="text" id="to_street1" name="to_street1" placeholder="456 Market St" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="to_city">City</label>
+                            <input type="text" id="to_city" name="to_city" placeholder="Miami" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="to_state">State</label>
+                            <input type="text" id="to_state" name="to_state" placeholder="FL" maxlength="2" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="to_zip">ZIP code</label>
+                            <input type="text" id="to_zip" name="to_zip" placeholder="33101" required>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Package + service + payment -->
+                <section>
+                    <div class="section-title">Package & payment</div>
+
+                    <div class="field-grid-3">
+                        <div class="form-group">
+                            <label for="weight_oz">Weight (oz)</label>
+                            <input type="number" min="0.1" step="0.1" id="weight_oz" name="weight_oz" placeholder="e.g. 12.5" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="service">Service</label>
+                            <select id="service" name="service">
+                                <option value="USPS First-Class">USPS First-Class</option>
+                                <option value="USPS Priority Mail">USPS Priority Mail</option>
+                                <option value="USPS Priority Mail Express">USPS Priority Mail Express</option>
+                                <option value="UPS Ground">UPS Ground</option>
+                                <option value="UPS 2nd Day Air">UPS 2nd Day Air</option>
+                                <option value="UPS Next Day Air">UPS Next Day Air</option>
+                                <option value="FedEx Ground">FedEx Ground</option>
+                                <option value="FedEx 2Day">FedEx 2Day</option>
+                                <option value="FedEx Standard Overnight">FedEx Standard Overnight</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="reference">Reference (optional)</label>
+                            <input type="text" id="reference" name="reference" placeholder="Order #, notes, etc.">
+                        </div>
+                    </div>
+
+                    <div class="mini-row">
+                        <span class="badge">Payment method</span>
+                        <span class="badge highlight">Wallet: ${{ '%.2f'|format(balance or 0.0) }}</span>
+                    </div>
+
+                    <div class="payment-methods">
+                        <div class="payment-row">
+                            <div class="form-group payment-select">
+                                <label for="payment_method">Choose how to pay</label>
+                                <select id="payment_method" name="payment_method">
+                                    <option value="auto" selected>Auto — use wallet first, then crypto</option>
+                                    <option value="wallet">Wallet balance only</option>
+                                    <option value="crypto">Crypto (NOWPayments)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="helper-text">
+                            • <strong>Wallet balance</strong>: instant, no extra steps.  
+                            • <strong>Crypto</strong>: you’ll be redirected to NOWPayments to complete payment.
+                        </div>
+                    </div>
+
+                    <div class="actions">
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary" type="button">
+                            Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            Create label
+                        </button>
+                    </div>
+                </section>
+            </form>
+
+            <!-- Right: summary / info -->
+            <aside class="card">
+                <div class="summary-card-header">
+                    <div>
+                        <div class="summary-title">Label summary</div>
+                        <div class="card-subtitle">
+                            This is a live estimate. Final price is calculated when you submit.
+                        </div>
+                    </div>
+                    <span class="summary-pill">Crypto-powered</span>
+                </div>
+
+                <div class="summary-body">
+                    <div class="summary-row">
+                        <span class="summary-label">Wallet balance</span>
+                        <span class="summary-value">${{ '%.2f'|format(balance or 0.0) }}</span>
+                    </div>
+                    <div class="summary-row">
+                        <span class="summary-label">Supported carriers</span>
+                        <span class="summary-value">USPS, UPS, FedEx</span>
+                    </div>
+                    <div class="summary-row">
+                        <span class="summary-label">Supported payments</span>
+                        <span class="summary-value">Wallet, Crypto (NOWPayments)</span>
+                    </div>
+                    <div class="summary-row">
+                        <span class="summary-label">Typical processing</span>
+                        <span class="summary-value">Under 2 minutes</span>
+                    </div>
+                </div>
+
+                <div class="summary-footer">
+                    <div>
+                        <div class="summary-total-label">You’ll be able to</div>
+                        <div>Download the PDF label instantly after payment is confirmed.</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div class="summary-total-label">Approx. label cost from</div>
+                        <div class="summary-total-amount">$3.00</div>
+                    </div>
+                </div>
+            </aside>
         </div>
-        <div class="field">
-          <label for="to_street1">Street address</label>
-          <input type="text" id="to_street1" name="to_street1" required>
-        </div>
-        <div class="field-row">
-          <div class="field">
-            <label for="to_city">City</label>
-            <input type="text" id="to_city" name="to_city" required>
-          </div>
-          <div class="field">
-            <label for="to_state">State</label>
-            <input type="text" id="to_state" name="to_state" maxlength="2" required>
-          </div>
-          <div class="field">
-            <label for="to_zip">ZIP</label>
-            <input type="text" id="to_zip" name="to_zip" required>
-          </div>
-        </div>
-      </section>
+    </main>
 
-      <!-- Shipment details -->
-      <section class="form-section">
-        <h2>Shipment details</h2>
-
-        <div class="field">
-          <label for="service">Carrier &amp; Service</label>
-          <select id="service" name="service" required>
-            <optgroup label="USPS">
-              <option value="USPS First-Class">USPS First-Class</option>
-              <option value="USPS Priority Mail">USPS Priority Mail</option>
-              <option value="USPS Priority Mail Express">USPS Priority Mail Express</option>
-            </optgroup>
-            <optgroup label="UPS">
-              <option value="UPS Ground">UPS Ground</option>
-              <option value="UPS 3 Day Select">UPS 3 Day Select</option>
-              <option value="UPS 2nd Day Air">UPS 2nd Day Air</option>
-              <option value="UPS Next Day Air Saver">UPS Next Day Air Saver</option>
-              <option value="UPS Next Day Air">UPS Next Day Air</option>
-            </optgroup>
-            <optgroup label="FedEx">
-              <option value="FedEx Ground">FedEx Ground</option>
-              <option value="FedEx Express Saver (3-Day)">FedEx Express Saver (3-Day)</option>
-              <option value="FedEx 2Day">FedEx 2Day</option>
-              <option value="FedEx Standard Overnight">FedEx Standard Overnight</option>
-              <option value="FedEx Priority Overnight">FedEx Priority Overnight</option>
-            </optgroup>
-          </select>
-        </div>
-
-        <div class="field-row">
-          <div class="field">
-            <label for="weight_oz">Weight (oz)</label>
-            <input type="number" id="weight_oz" name="weight_oz" min="0.1" step="0.1" required>
-          </div>
-          <div class="field">
-            <label for="reference">Reference (optional)</label>
-            <input type="text" id="reference" name="reference" placeholder="Order ID, notes, etc.">
-          </div>
-        </div>
-      </section>
-
-      <!-- Payment method -->
-      <section class="form-section">
-        <h2>Payment</h2>
-
-        <div class="field">
-          <label for="payment_method">Payment method</label>
-          <select id="payment_method" name="payment_method" required>
-            <option value="wallet">
-              Wallet balance ({{ '%.2f'|format(balance or 0) }} USD)
-            </option>
-            <option value="crypto">
-              Crypto (NOWPayments)
-            </option>
-          </select>
-          <p class="field-hint">
-            If your wallet balance isn’t enough to cover the full label price,
-            you’ll be asked to top up or you can choose Crypto instead.
-          </p>
-        </div>
-      </section>
-
-      <div class="form-actions">
-        <button type="submit" class="btn btn-primary">Create label</button>
-        <a href="{{ url_for('dashboard') }}" class="btn btn-ghost">Cancel</a>
-      </div>
-    </form>
-  </main>
-
-  <footer class="site-footer">
-    <span>© CryptoParcel</span>
-  </footer>
+    <footer>
+        <span>© CryptoParcel – Ship with crypto, in minutes.</span>
+    </footer>
+</div>
 </body>
 </html>
-
