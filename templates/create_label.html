@@ -1,74 +1,176 @@
-{% extends 'base.html' %}
-{% block title %}Create Label — CryptoParcel{% endblock %}
-{% block content %}
-<section class="section">
-  <h2>Create a Shipping Label</h2>
-  <p class="muted">Your wallet balance will be used first. If there isn&apos;t enough, you&apos;ll be offered a crypto invoice instead.</p>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Create Label - CryptoParcel</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+  <!-- Top nav -->
+  <header class="top-nav">
+    <div class="nav-left">
+      <a href="{{ url_for('dashboard') }}" class="logo">
+        <span class="logo-mark">฿</span> CryptoParcel
+      </a>
+    </div>
+    <nav class="nav-right">
+      <a href="{{ url_for('dashboard') }}">Dashboard</a>
+      <a href="{{ url_for('create_label') }}" class="active">Create Label</a>
+      <a href="{{ url_for('orders') }}">Orders</a>
+      <a href="{{ url_for('wallet') }}">Wallet</a>
+      <a href="{{ url_for('logout') }}">Logout</a>
+    </nav>
+  </header>
 
-  <form method="POST" class="card form">
-    <h3>Service</h3>
-    <label>Carrier &amp; service</label>
-    <select name="service" required>
-      <optgroup label="USPS">
-        <option value="USPS First-Class">USPS First-Class (2–5 business days)</option>
-        <option value="USPS Ground Advantage">USPS Ground Advantage (2–5 business days)</option>
-        <option value="USPS Priority Mail">USPS Priority Mail (1–3 business days)</option>
-        <option value="USPS Priority Mail Express">USPS Priority Mail Express (Overnight–2 days)</option>
-      </optgroup>
+  <main class="page page-narrow">
+    <h1 class="page-title">Create shipping label</h1>
 
-      <optgroup label="UPS">
-        <option value="UPS Ground">UPS Ground (1–5 business days)</option>
-        <option value="UPS 3 Day Select">UPS 3 Day Select (3 business days)</option>
-        <option value="UPS 2nd Day Air">UPS 2nd Day Air (2 business days)</option>
-        <option value="UPS 2nd Day Air A.M.">UPS 2nd Day Air A.M.</option>
-        <option value="UPS Next Day Air Saver">UPS Next Day Air Saver</option>
-        <option value="UPS Next Day Air">UPS Next Day Air</option>
-        <option value="UPS Next Day Air Early">UPS Next Day Air Early</option>
-      </optgroup>
+    <div class="sub-header">
+      <div>Fill in the shipment details and choose how you want to pay.</div>
+      <div class="wallet-pill">
+        Wallet balance:
+        <strong>${{ '%.2f'|format(balance or 0) }}</strong>
+      </div>
+    </div>
 
-      <optgroup label="FedEx">
-        <option value="FedEx Ground">FedEx Ground</option>
-        <option value="FedEx Home Delivery">FedEx Home Delivery</option>
-        <option value="FedEx Express Saver">FedEx Express Saver (3 business days)</option>
-        <option value="FedEx 2Day">FedEx 2Day</option>
-        <option value="FedEx 2Day A.M.">FedEx 2Day A.M.</option>
-        <option value="FedEx Standard Overnight">FedEx Standard Overnight</option>
-        <option value="FedEx Priority Overnight">FedEx Priority Overnight</option>
-        <option value="FedEx First Overnight">FedEx First Overnight</option>
-      </optgroup>
-    </select>
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash-list">
+          {% for category, message in messages %}
+            <div class="flash flash-{{ category }}">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
 
-    <label>Weight (oz)</label>
-    <input type="number" step="0.1" min="0.1" max="10000" name="weight_oz" required>
+    <form method="post" class="card form-grid">
+      <!-- From address -->
+      <section class="form-section">
+        <h2>From address</h2>
+        <div class="field">
+          <label for="from_name">Name</label>
+          <input type="text" id="from_name" name="from_name" required>
+        </div>
+        <div class="field">
+          <label for="from_street1">Street address</label>
+          <input type="text" id="from_street1" name="from_street1" required>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="from_city">City</label>
+            <input type="text" id="from_city" name="from_city" required>
+          </div>
+          <div class="field">
+            <label for="from_state">State</label>
+            <input type="text" id="from_state" name="from_state" maxlength="2" required>
+          </div>
+          <div class="field">
+            <label for="from_zip">ZIP</label>
+            <input type="text" id="from_zip" name="from_zip" required>
+          </div>
+        </div>
+      </section>
 
-    <h3>From address</h3>
-    <label>Name</label>
-    <input type="text" name="from_name" required>
-    <label>Street address</label>
-    <input type="text" name="from_street1" required>
-    <label>City</label>
-    <input type="text" name="from_city" required>
-    <label>State</label>
-    <input type="text" name="from_state" maxlength="2" required>
-    <label>ZIP</label>
-    <input type="text" name="from_zip" required>
+      <!-- To address -->
+      <section class="form-section">
+        <h2>To address</h2>
+        <div class="field">
+          <label for="to_name">Name</label>
+          <input type="text" id="to_name" name="to_name" required>
+        </div>
+        <div class="field">
+          <label for="to_street1">Street address</label>
+          <input type="text" id="to_street1" name="to_street1" required>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="to_city">City</label>
+            <input type="text" id="to_city" name="to_city" required>
+          </div>
+          <div class="field">
+            <label for="to_state">State</label>
+            <input type="text" id="to_state" name="to_state" maxlength="2" required>
+          </div>
+          <div class="field">
+            <label for="to_zip">ZIP</label>
+            <input type="text" id="to_zip" name="to_zip" required>
+          </div>
+        </div>
+      </section>
 
-    <h3>To address</h3>
-    <label>Name</label>
-    <input type="text" name="to_name" required>
-    <label>Street address</label>
-    <input type="text" name="to_street1" required>
-    <label>City</label>
-    <input type="text" name="to_city" required>
-    <label>State</label>
-    <input type="text" name="to_state" maxlength="2" required>
-    <label>ZIP</label>
-    <input type="text" name="to_zip" required>
+      <!-- Shipment details -->
+      <section class="form-section">
+        <h2>Shipment details</h2>
 
-    <label>Reference (optional)</label>
-    <input type="text" name="reference" placeholder="Order ID, customer name, etc.">
+        <div class="field">
+          <label for="service">Carrier &amp; Service</label>
+          <select id="service" name="service" required>
+            <optgroup label="USPS">
+              <option value="USPS First-Class">USPS First-Class</option>
+              <option value="USPS Priority Mail">USPS Priority Mail</option>
+              <option value="USPS Priority Mail Express">USPS Priority Mail Express</option>
+            </optgroup>
+            <optgroup label="UPS">
+              <option value="UPS Ground">UPS Ground</option>
+              <option value="UPS 3 Day Select">UPS 3 Day Select</option>
+              <option value="UPS 2nd Day Air">UPS 2nd Day Air</option>
+              <option value="UPS Next Day Air Saver">UPS Next Day Air Saver</option>
+              <option value="UPS Next Day Air">UPS Next Day Air</option>
+            </optgroup>
+            <optgroup label="FedEx">
+              <option value="FedEx Ground">FedEx Ground</option>
+              <option value="FedEx Express Saver (3-Day)">FedEx Express Saver (3-Day)</option>
+              <option value="FedEx 2Day">FedEx 2Day</option>
+              <option value="FedEx Standard Overnight">FedEx Standard Overnight</option>
+              <option value="FedEx Priority Overnight">FedEx Priority Overnight</option>
+            </optgroup>
+          </select>
+        </div>
 
-    <button class="btn primary">Create label</button>
-  </form>
-</section>
-{% endblock %}
+        <div class="field-row">
+          <div class="field">
+            <label for="weight_oz">Weight (oz)</label>
+            <input type="number" id="weight_oz" name="weight_oz" min="0.1" step="0.1" required>
+          </div>
+          <div class="field">
+            <label for="reference">Reference (optional)</label>
+            <input type="text" id="reference" name="reference" placeholder="Order ID, notes, etc.">
+          </div>
+        </div>
+      </section>
+
+      <!-- Payment method -->
+      <section class="form-section">
+        <h2>Payment</h2>
+
+        <div class="field">
+          <label for="payment_method">Payment method</label>
+          <select id="payment_method" name="payment_method" required>
+            <option value="wallet">
+              Wallet balance ({{ '%.2f'|format(balance or 0) }} USD)
+            </option>
+            <option value="crypto">
+              Crypto (NOWPayments)
+            </option>
+          </select>
+          <p class="field-hint">
+            If your wallet balance isn’t enough to cover the full label price,
+            you’ll be asked to top up or you can choose Crypto instead.
+          </p>
+        </div>
+      </section>
+
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Create label</button>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-ghost">Cancel</a>
+      </div>
+    </form>
+  </main>
+
+  <footer class="site-footer">
+    <span>© {{ datetime.utcnow().year }} CryptoParcel</span>
+  </footer>
+</body>
+</html>
+

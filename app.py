@@ -574,10 +574,15 @@ def register_routes(app: Flask):
 
     # ----------------------- CREATE LABEL (wallet-first) -----------------------
 
+        # ----------------------- CREATE LABEL (wallet or crypto) -----------------------
+
     @app.route("/create-label", methods=["GET", "POST"])
     @login_required
     def create_label():
         if request.method == "POST":
+            # New: payment method from form
+            payment_method = (request.form.get("payment_method") or "wallet").lower()
+
             service = request.form.get("service") or "USPS First-Class"
 
             if service.startswith("USPS"):
@@ -621,16 +626,13 @@ def register_routes(app: Flask):
                 flash("To address is incomplete.", "error")
                 return redirect(url_for("create_label"))
 
-            from_address = (
-                f"{fa_name}\n{fa_street1}\n{fa_city}, {fa_state} {fa_zip}\nUnited States"
-            )
-            to_address = (
-                f"{ta_name}\n{ta_street1}\n{ta_city}, {ta_state} {ta_zip}\nUnited States"
-            )
+            from_address = f"{fa_name}\n{fa_street1}\n{fa_city}, {fa_state} {fa_zip}\nUnited States"
+            to_address = f"{ta_name}\n{ta_street1}\n{ta_city}, {ta_state} {ta_zip}\nUnited States"
 
             reference = (request.form.get("reference") or "").strip()
             amount_usd = calculate_label_price(carrier, service, weight_oz)
 
+            # Create order in pending state
             order = Order(
                 user_id=current_user.id,
                 carrier=carrier,
@@ -645,51 +647,58 @@ def register_routes(app: Flask):
             db.session.add(order)
             db.session.commit()
 
-            # WALLET-FIRST LOGIC
-            user_balance = current_user.balance_usd or 0.0
-            if user_balance >= amount_usd:
-                current_user.balance_usd = user_balance - amount_usd
-                order.status = "paid"
+            # --------- OPTION 1: WALLET BALANCE ---------
+            if payment_method == "wallet":
+                user_balance = current_user.balance_usd or 0.0
+                if user_balance >= amount_usd:
+                    current_user.balance_usd = user_balance - amount_usd
+                    order.status = "paid"
 
-                wallet_payment = Payment(
-                    order_id=order.id,
-                    user_id=current_user.id,
-                    type="label",
-                    provider="wallet",
-                    provider_payment_id=None,
-                    amount_usd=amount_usd,
-                    currency="usd",
-                    status="paid",
-                )
-                db.session.add(wallet_payment)
-                log_wallet_change(
-                    current_user, -amount_usd, f"Label #{order.id} purchase"
-                )
-                db.session.commit()
-
-                # Email notification
-                try:
-                    send_email(
-                        subject="Your CryptoParcel label is paid",
-                        to_email=current_user.email,
-                        html_body=f"<p>Your label #{order.id} has been paid using your wallet balance.</p>",
-                        text_body=(
-                            f"Your label #{order.id} has been paid using your wallet balance."
-                        ),
+                    wallet_payment = Payment(
+                        order_id=order.id,
+                        user_id=current_user.id,
+                        type="label",
+                        provider="wallet",
+                        provider_payment_id=None,
+                        amount_usd=amount_usd,
+                        currency="usd",
+                        status="paid",
                     )
-                except Exception:
-                    pass
+                    db.session.add(wallet_payment)
+                    log_wallet_change(
+                        current_user,
+                        -amount_usd,
+                        f"Label #{order.id} purchase (wallet)",
+                    )
+                    db.session.commit()
 
-                flash("Label paid using your wallet balance.", "success")
-                return redirect(url_for("order_detail", order_id=order.id))
+                    # Email notification
+                    try:
+                        send_email(
+                            subject="Your CryptoParcel label is paid",
+                            to_email=current_user.email,
+                            html_body=f"<p>Your label #{order.id} has been paid using your wallet balance.</p>",
+                            text_body=f"Your label #{order.id} has been paid using your wallet balance.",
+                        )
+                    except Exception:
+                        pass
 
-            # Crypto fallback via NOWPayments
+                    flash("Label paid using your wallet balance.", "success")
+                    return redirect(url_for("order_detail", order_id=order.id))
+                else:
+                    # Not enough wallet funds
+                    flash(
+                        f"Your wallet balance (${user_balance:.2f}) is not enough to cover this label (${amount_usd:.2f}). "
+                        "Please top up your wallet or choose Crypto as the payment method.",
+                        "error",
+                    )
+                    return redirect(url_for("wallet_topup"))
+
+            # --------- OPTION 2: CRYPTO (NOWPAYMENTS) ---------
             try:
                 invoice = create_nowpayments_invoice(order)
             except Exception as e:
-                current_app.logger.error(
-                    f"Error creating NOWPayments invoice: {e}"
-                )
+                current_app.logger.error(f"Error creating NOWPayments invoice: {e}")
                 order.status = "payment_error"
                 db.session.commit()
                 flash(
@@ -715,7 +724,12 @@ def register_routes(app: Flask):
 
             return redirect(invoice.get("invoice_url"))
 
-        return render_template("create_label.html")
+        # GET: show form with current wallet balance
+        return render_template(
+            "create_label.html",
+            balance=current_user.balance_usd or 0.0,
+        )
+
 
     # ----------------------- NOWPAYMENTS IPN -----------------------
 
