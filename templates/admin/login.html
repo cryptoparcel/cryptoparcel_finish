@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block title %}Admin Login — CryptoParcel{% endblock %}
+{% block content %}
+<section class="section">
+  <h2>Admin Login</h2>
+  <form method="POST" class="card form">
+    <label>Admin password</label>
+    <input type="password" name="password" required>
+    <button class="btn primary">Unlock admin</button>
+  </form>
+</section>
+{% endblock %}

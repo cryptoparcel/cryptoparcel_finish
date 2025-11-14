@@ -1,48 +1,19 @@
+
 {% extends 'base.html' %}
 {% block title %}Dashboard — CryptoParcel{% endblock %}
 {% block content %}
-<h2>Welcome back</h2>
-<div class="dashboard-summary">
-  <div class="card stat-card">
-    <h3>Wallet balance</h3>
-    <p class="stat-amount">${{ '%.2f'|format(balance or 0) }}</p>
-    <a href="{{ url_for('wallet') }}" class="btn small">Manage wallet</a>
-  </div>
-  <div class="card stat-card">
-    <h3>Create shipment</h3>
-    <p>Generate a new USPS, UPS, or FedEx label.</p>
-    <a href="{{ url_for('create_label') }}" class="btn small primary">New label</a>
-  </div>
-</div>
-<h3>Recent orders</h3>
-{% if orders %}
-  <div class="card table-card">
-    <table>
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Carrier</th>
-          <th>Service</th>
-          <th>Amount</th>
-          <th>Status</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for o in orders %}
-          <tr>
-            <td>#{{ o.id }}</td>
-            <td>{{ o.carrier }}</td>
-            <td>{{ o.service }}</td>
-            <td>${{ '%.2f'|format(o.amount_usd) }}</td>
-            <td>{{ o.status }}</td>
-            <td><a href="{{ url_for('order_detail', order_id=o.id) }}">View</a></td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+<h2>Your Dashboard</h2>
+<a href="{{ url_for('create_label') }}" class="btn primary">Create New Label</a>
+<h3>Your Recent Orders</h3>
+<div class="grid">
+{% for order in orders %}
+  <div class="card">
+    <h4>Order #{{ order.id }}</h4>
+    <p>Status: {{ order.status }}</p>
+    <a href="{{ url_for('order_detail', order_id=order.id) }}" class="btn">View</a>
   </div>
 {% else %}
-  <p class="muted">No orders yet. <a href="{{ url_for('create_label') }}">Create your first label</a>.</p>
-{% endif %}
+  <p>No orders yet.</p>
+{% endfor %}
+</div>
 {% endblock %}

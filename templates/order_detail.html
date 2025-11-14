@@ -1,18 +1,15 @@
+
 {% extends 'base.html' %}
 {% block title %}Order #{{ order.id }} — CryptoParcel{% endblock %}
 {% block content %}
 <h2>Order #{{ order.id }}</h2>
-<div class="card">
-  <p><strong>Carrier:</strong> {{ order.carrier }}</p>
-  <p><strong>Service:</strong> {{ order.service }}</p>
-  <p><strong>Amount:</strong> ${{ '%.2f'|format(order.amount_usd) }}</p>
-  <p><strong>Status:</strong> {{ order.status }}</p>
-  <p><strong>From:</strong><br><pre>{{ order.from_address }}</pre></p>
-  <p><strong>To:</strong><br><pre>{{ order.to_address }}</pre></p>
-  {% if order.status in ['paid', 'finished', 'confirmed'] %}
-    <a href="{{ url_for('download_label', order_id=order.id) }}" class="btn primary">Download label</a>
-  {% else %}
-    <p class="muted small">Label will be available once payment is confirmed.</p>
-  {% endif %}
-</div>
+<p>Status: {{ order.status }}</p>
+<p>Carrier: {{ order.carrier }}</p>
+<p>Service: {{ order.service }}</p>
+<p>Weight: {{ order.weight_oz }} oz</p>
+{% if order.status in ['paid','confirmed','finished'] %}
+  <a class="btn primary" href="{{ url_for('download_label', order_id=order.id) }}">Download Label</a>
+{% else %}
+  <p>Waiting for payment confirmation…</p>
+{% endif %}
 {% endblock %}

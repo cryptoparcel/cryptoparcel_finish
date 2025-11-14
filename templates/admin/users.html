@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block title %}Admin Users — CryptoParcel{% endblock %}
+{% block content %}
+<section class="section">
+  <h2>Users</h2>
+  <table class="table">
+    <tr>
+      <th>ID</th><th>Email</th><th>Balance</th><th>Created</th><th>Adjust balance</th>
+    </tr>
+    {% for u in users %}
+    <tr>
+      <td>{{ u.id }}</td>
+      <td>{{ u.email }}</td>
+      <td>${{ '%.2f'|format(u.balance_usd or 0.0) }}</td>
+      <td>{{ u.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+      <td>
+        <form method="POST" action="{{ url_for('admin_adjust_balance', user_id=u.id) }}" class="inline-form">
+          <input type="number" name="delta" step="0.01" required placeholder="+/- amount">
+          <input type="text" name="reason" placeholder="Reason (optional)">
+          <button class="btn small" type="submit">Apply</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+</section>
+{% endblock %}
