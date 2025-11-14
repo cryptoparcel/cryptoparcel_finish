@@ -44,7 +44,10 @@ db = SQLAlchemy()
 login_manager = LoginManager()
 login_manager.login_view = "login"
 
-limiter = Limiter(key_func=get_remote_address, default_limits=["200 per day", "50 per hour"])
+limiter = Limiter(
+    key_func=get_remote_address,
+    default_limits=["200 per day", "50 per hour"],
+)
 
 
 def calculate_label_price(carrier: str, service: str, weight_oz: float) -> float:
@@ -79,7 +82,9 @@ def create_app():
     def add_security_headers(response):
         response.headers.setdefault("X-Frame-Options", "DENY")
         response.headers.setdefault("X-Content-Type-Options", "nosniff")
-        response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+        response.headers.setdefault(
+            "Referrer-Policy", "strict-origin-when-cross-origin"
+        )
         csp = (
             "default-src 'self'; "
             "script-src 'self'; "
@@ -93,6 +98,7 @@ def create_app():
     with app.app_context():
         # Import models so SQLAlchemy is aware of them
         from models import User, Order, Payment, WalletLog  # noqa: F401
+
         db.create_all()
 
     register_routes(app)
@@ -102,6 +108,7 @@ def create_app():
 @login_manager.user_loader
 def load_user(user_id):
     from models import User
+
     try:
         return User.query.get(int(user_id))
     except Exception:
@@ -128,7 +135,9 @@ def admin_required(fn):
     return wrapper
 
 
-def send_email(subject: str, to_email: str, html_body: str, text_body: str | None = None):
+def send_email(
+    subject: str, to_email: str, html_body: str, text_body: str | None = None
+):
     """Best-effort SMTP email sender using environment variables.
 
     Required env vars:
@@ -180,7 +189,8 @@ def log_wallet_change(user, amount_change: float, reason: str):
 def verify_nowpayments_signature(raw_body: bytes, signature: str) -> bool:
     """Verify NOWPayments IPN signature using sorted JSON body.
 
-    NOWPayments expects HMAC-SHA512 over JSON.stringify(params, Object.keys(params).sort())."""
+    NOWPayments expects HMAC-SHA512 over JSON.stringify(params, Object.keys(params).sort()).
+    """
     secret = os.getenv("NOWPAYMENTS_IPN_SECRET", "")
     if not secret or not signature:
         return False
@@ -199,13 +209,21 @@ def verify_nowpayments_signature(raw_body: bytes, signature: str) -> bool:
 
 
 def get_nowpayments_payment(np_id: str) -> dict:
-    """Fetch a single NOWPayments payment by its np_id (from redirect)."""
+    """
+    Fetch a single NOWPayments payment.
+
+    NOWPayments redirects back with `NP_id=...` in the URL. That NP_id value
+    actually corresponds to the payment_id used by the standard
+    /v1/payment/{payment_id} endpoint.
+    """
     api_key = os.getenv("NOWPAYMENTS_API_KEY")
     base_url = os.getenv("NOWPAYMENTS_BASE_URL", "https://api.nowpayments.io")
-    # Use the np_id endpoint
-    url = f"{base_url.rstrip('/')}/v1/payment/np_id/{np_id}"
+    # Treat NP_id as payment_id and use the normal endpoint
+    url = f"{base_url.rstrip('/')}/v1/payment/{np_id}"
     headers = {"x-api-key": api_key} if api_key else {}
-    current_app.logger.info(f"Fetching NOWPayments payment status for np_id={np_id}")
+    current_app.logger.info(
+        f"Fetching NOWPayments payment status for payment_id={np_id}"
+    )
     resp = requests.get(url, headers=headers, timeout=30)
     resp.raise_for_status()
     return resp.json()
@@ -247,7 +265,9 @@ def create_topup_invoice(payment) -> dict:
     }
 
     headers = {"x-api-key": api_key} if api_key else {}
-    current_app.logger.info(f"Creating NOWPayments topup invoice for payment {payment.id}")
+    current_app.logger.info(
+        f"Creating NOWPayments topup invoice for payment {payment.id}"
+    )
     resp = requests.post(url, json=payload, headers=headers, timeout=30)
     resp.raise_for_status()
     return resp.json()
@@ -452,7 +472,12 @@ def register_routes(app: Flask):
                     raw_id = order_id.split("topup-", 1)[1]
                     if raw_id.isdigit():
                         payment = Payment.query.get(int(raw_id))
-                        success_statuses = {"finished", "confirmed", "paid", "completed"}
+                        success_statuses = {
+                            "finished",
+                            "confirmed",
+                            "paid",
+                            "completed",
+                        }
                         if (
                             payment
                             and payment.type == "topup"
@@ -461,7 +486,9 @@ def register_routes(app: Flask):
                         ):
                             user = User.query.get(payment.user_id)
                             if user:
-                                user.balance_usd = (user.balance_usd or 0.0) + payment.amount_usd
+                                user.balance_usd = (
+                                    user.balance_usd or 0.0
+                                ) + payment.amount_usd
                                 log_wallet_change(
                                     user,
                                     payment.amount_usd,
@@ -470,7 +497,10 @@ def register_routes(app: Flask):
                             payment.status = "paid"
                             db.session.commit()
             except Exception as e:
-                current_app.logger.warning(f"Error processing NOWPayments NP_id {np_id}: {e}")
+                current_app.logger.warning(
+                    f"Error processing NOWPayments NP_id {np_id}: {e}"
+                )
+
         topups = (
             Payment.query.filter_by(user_id=current_user.id, type="topup")
             .order_by(Payment.created_at.desc())
@@ -520,10 +550,15 @@ def register_routes(app: Flask):
             try:
                 invoice = create_topup_invoice(payment)
             except Exception as e:
-                current_app.logger.error(f"Error creating NOWPayments topup invoice: {e}")
+                current_app.logger.error(
+                    f"Error creating NOWPayments topup invoice: {e}"
+                )
                 payment.status = "payment_error"
                 db.session.commit()
-                flash("Could not create crypto invoice, please try again later.", "error")
+                flash(
+                    "Could not create crypto invoice, please try again later.",
+                    "error",
+                )
                 return redirect(url_for("wallet"))
 
             payment.provider_payment_id = str(
@@ -533,7 +568,9 @@ def register_routes(app: Flask):
 
             return redirect(invoice.get("invoice_url"))
 
-        return render_template("wallet_topup.html", balance=current_user.balance_usd or 0.0)
+        return render_template(
+            "wallet_topup.html", balance=current_user.balance_usd or 0.0
+        )
 
     # ----------------------- CREATE LABEL (wallet-first) -----------------------
 
@@ -584,8 +621,12 @@ def register_routes(app: Flask):
                 flash("To address is incomplete.", "error")
                 return redirect(url_for("create_label"))
 
-            from_address = f"{fa_name}\n{fa_street1}\n{fa_city}, {fa_state} {fa_zip}\nUnited States"
-            to_address = f"{ta_name}\n{ta_street1}\n{ta_city}, {ta_state} {ta_zip}\nUnited States"
+            from_address = (
+                f"{fa_name}\n{fa_street1}\n{fa_city}, {fa_state} {fa_zip}\nUnited States"
+            )
+            to_address = (
+                f"{ta_name}\n{ta_street1}\n{ta_city}, {ta_state} {ta_zip}\nUnited States"
+            )
 
             reference = (request.form.get("reference") or "").strip()
             amount_usd = calculate_label_price(carrier, service, weight_oz)
@@ -621,7 +662,9 @@ def register_routes(app: Flask):
                     status="paid",
                 )
                 db.session.add(wallet_payment)
-                log_wallet_change(current_user, -amount_usd, f"Label #{order.id} purchase")
+                log_wallet_change(
+                    current_user, -amount_usd, f"Label #{order.id} purchase"
+                )
                 db.session.commit()
 
                 # Email notification
@@ -630,7 +673,9 @@ def register_routes(app: Flask):
                         subject="Your CryptoParcel label is paid",
                         to_email=current_user.email,
                         html_body=f"<p>Your label #{order.id} has been paid using your wallet balance.</p>",
-                        text_body=f"Your label #{order.id} has been paid using your wallet balance.",
+                        text_body=(
+                            f"Your label #{order.id} has been paid using your wallet balance."
+                        ),
                     )
                 except Exception:
                     pass
@@ -642,7 +687,9 @@ def register_routes(app: Flask):
             try:
                 invoice = create_nowpayments_invoice(order)
             except Exception as e:
-                current_app.logger.error(f"Error creating NOWPayments invoice: {e}")
+                current_app.logger.error(
+                    f"Error creating NOWPayments invoice: {e}"
+                )
                 order.status = "payment_error"
                 db.session.commit()
                 flash(
@@ -696,7 +743,9 @@ def register_routes(app: Flask):
 
         payment = Payment.query.filter_by(provider_payment_id=payment_id).first()
         if not payment:
-            current_app.logger.warning(f"NOWPayments IPN: payment not found: {payment_id}")
+            current_app.logger.warning(
+                f"NOWPayments IPN: payment not found: {payment_id}"
+            )
             return "payment not found", 404
 
         success_statuses = {"finished", "confirmed", "paid", "completed"}
@@ -706,8 +755,12 @@ def register_routes(app: Flask):
                 payment.status = "paid"
                 user = User.query.get(payment.user_id)
                 if user:
-                    user.balance_usd = (user.balance_usd or 0.0) + payment.amount_usd
-                    log_wallet_change(user, payment.amount_usd, "Wallet top-up via NOWPayments")
+                    user.balance_usd = (
+                        user.balance_usd or 0.0
+                    ) + payment.amount_usd
+                    log_wallet_change(
+                        user, payment.amount_usd, "Wallet top-up via NOWPayments"
+                    )
                 db.session.commit()
 
                 # Email
@@ -716,8 +769,12 @@ def register_routes(app: Flask):
                         send_email(
                             subject="Your CryptoParcel wallet was topped up",
                             to_email=user.email,
-                            html_body=f"<p>Your wallet was credited ${payment.amount_usd:.2f}.</p>",
-                            text_body=f"Your wallet was credited ${payment.amount_usd:.2f}.",
+                            html_body=(
+                                f"<p>Your wallet was credited ${payment.amount_usd:.2f}.</p>"
+                            ),
+                            text_body=(
+                                f"Your wallet was credited ${payment.amount_usd:.2f}."
+                            ),
                         )
                 except Exception:
                     pass
@@ -736,8 +793,12 @@ def register_routes(app: Flask):
                             send_email(
                                 subject="Your CryptoParcel label is paid",
                                 to_email=user.email,
-                                html_body=f"<p>Your label #{order.id} has been paid via crypto.</p>",
-                                text_body=f"Your label #{order.id} has been paid via crypto.",
+                                html_body=(
+                                    f"<p>Your label #{order.id} has been paid via crypto.</p>"
+                                ),
+                                text_body=(
+                                    f"Your label #{order.id} has been paid via crypto."
+                                ),
                             )
                     except Exception:
                         pass
@@ -779,9 +840,15 @@ def register_routes(app: Flask):
         total_users = User.query.count()
         total_orders = Order.query.count()
         total_payments = Payment.query.count()
-        total_wallet_balance = db.session.query(db.func.coalesce(db.func.sum(User.balance_usd), 0.0)).scalar()
-        recent_orders = Order.query.order_by(Order.created_at.desc()).limit(10).all()
-        recent_payments = Payment.query.order_by(Payment.created_at.desc()).limit(10).all()
+        total_wallet_balance = db.session.query(
+            db.func.coalesce(db.func.sum(User.balance_usd), 0.0)
+        ).scalar()
+        recent_orders = (
+            Order.query.order_by(Order.created_at.desc()).limit(10).all()
+        )
+        recent_payments = (
+            Payment.query.order_by(Payment.created_at.desc()).limit(10).all()
+        )
         return render_template(
             "admin/dashboard.html",
             total_users=total_users,
@@ -800,7 +867,9 @@ def register_routes(app: Flask):
         if status:
             q = q.filter_by(status=status)
         orders = q.order_by(Order.created_at.desc()).limit(100).all()
-        return render_template("admin/orders.html", orders=orders, filter_status=status)
+        return render_template(
+            "admin/orders.html", orders=orders, filter_status=status
+        )
 
     @app.route("/admin/orders/<int:order_id>/delete", methods=["POST"])
     @admin_required
@@ -821,7 +890,10 @@ def register_routes(app: Flask):
             db.session.commit()
             flash(f"Order #{order_id} cancelled.", "info")
         else:
-            flash("Order is already finalized and cannot be cancelled.", "error")
+            flash(
+                "Order is already finalized and cannot be cancelled.",
+                "error",
+            )
         return redirect(url_for("admin_orders"))
 
     @app.route("/admin/payments")
@@ -832,7 +904,9 @@ def register_routes(app: Flask):
         if ptype:
             q = q.filter_by(type=ptype)
         payments = q.order_by(Payment.created_at.desc()).limit(100).all()
-        return render_template("admin/payments.html", payments=payments, filter_type=ptype)
+        return render_template(
+            "admin/payments.html", payments=payments, filter_type=ptype
+        )
 
     @app.route("/admin/payments/<int:payment_id>/delete", methods=["POST"])
     @admin_required
@@ -854,7 +928,9 @@ def register_routes(app: Flask):
     def admin_adjust_balance(user_id):
         user = User.query.get_or_404(user_id)
         delta_str = request.form.get("delta") or "0"
-        reason = (request.form.get("reason") or "Manual adjustment by admin").strip()
+        reason = (
+            request.form.get("reason") or "Manual adjustment by admin"
+        ).strip()
         try:
             delta = float(delta_str)
         except ValueError:
@@ -864,7 +940,10 @@ def register_routes(app: Flask):
         user.balance_usd = (user.balance_usd or 0.0) + delta
         log_wallet_change(user, delta, reason)
         db.session.commit()
-        flash(f"Updated balance for {user.email} by {delta:.2f}.", "success")
+        flash(
+            f"Updated balance for {user.email} by {delta:.2f}.",
+            "success",
+        )
         return redirect(url_for("admin_users"))
 
     @app.route("/admin/cleanup", methods=["POST"])
@@ -889,4 +968,8 @@ def register_routes(app: Flask):
 app = create_app()
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.getenv("PORT", 8000)), debug=True)
+    app.run(
+        host="0.0.0.0",
+        port=int(os.getenv("PORT", 8000)),
+        debug=True,
+    )
