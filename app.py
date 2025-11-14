@@ -32,6 +32,7 @@ import hashlib
 import requests
 import smtplib
 from email.message import EmailMessage
+from sqlalchemy.exc import ProgrammingError
 
 from config import Config
 from label_generator import generate_shipping_label_pdf
@@ -91,7 +92,14 @@ def create_app():
     with app.app_context():
         # Import models so SQLAlchemy is aware of them
         from models import User, Order, Payment, WalletLog  # noqa: F401
-        db.create_all()
+        try:
+            db.create_all()
+        except ProgrammingError as e:
+            msg = str(e).lower()
+            if "duplicate" in msg or "already exists" in msg:
+                app.logger.warning("db.create_all skipped: tables already exist (ProgrammingError)")
+            else:
+                raise
 
     register_routes(app)
     return app
