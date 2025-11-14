@@ -46,9 +46,6 @@ login_manager.login_view = "login"
 
 limiter = Limiter(key_func=get_remote_address, default_limits=["200 per day", "50 per hour"])
 
-# Centralized set of statuses that count as a successful crypto payment
-SUCCESS_STATUSES = {"finished", "confirmed", "paid", "completed"}
-
 
 def calculate_label_price(carrier: str, service: str, weight_oz: float) -> float:
     """Simple placeholder rate logic (replace later with real carrier APIs)."""
@@ -165,7 +162,7 @@ def send_email(subject: str, to_email: str, html_body: str, text_body: str | Non
             server.send_message(msg)
     except Exception as e:
         # Log but don't break app flow
-        current_app.logger.warning(f"Failed to send email: {e}")
+        logging.getLogger(__name__).warning(f"Failed to send email: {e}")
 
 
 def log_wallet_change(user, amount_change: float, reason: str):
@@ -183,8 +180,7 @@ def log_wallet_change(user, amount_change: float, reason: str):
 def verify_nowpayments_signature(raw_body: bytes, signature: str) -> bool:
     """Verify NOWPayments IPN signature using sorted JSON body.
 
-    NOWPayments expects HMAC-SHA512 over JSON.stringify(params, Object.keys(params).sort()).
-    """
+    NOWPayments expects HMAC-SHA512 over JSON.stringify(params, Object.keys(params).sort())."""
     secret = os.getenv("NOWPAYMENTS_IPN_SECRET", "")
     if not secret or not signature:
         return False
@@ -206,15 +202,13 @@ def get_nowpayments_payment(np_id: str) -> dict:
     """Fetch a single NOWPayments payment by its np_id (from redirect)."""
     api_key = os.getenv("NOWPAYMENTS_API_KEY")
     base_url = os.getenv("NOWPAYMENTS_BASE_URL", "https://api.nowpayments.io")
-    # NOTE: use the np_id endpoint
+    # Use the np_id endpoint
     url = f"{base_url.rstrip('/')}/v1/payment/np_id/{np_id}"
     headers = {"x-api-key": api_key} if api_key else {}
     current_app.logger.info(f"Fetching NOWPayments payment status for np_id={np_id}")
     resp = requests.get(url, headers=headers, timeout=30)
     resp.raise_for_status()
-    data = resp.json()
-    current_app.logger.info(f"NOWPayments np_id={np_id} response: {data}")
-    return data
+    return resp.json()
 
 
 def create_nowpayments_invoice(order) -> dict:
@@ -452,18 +446,18 @@ def register_routes(app: Flask):
         if np_id:
             try:
                 data = get_nowpayments_payment(np_id)
-                current_app.logger.info(f"NOWPayments redirect data for NP_id={np_id}: {data}")
                 payment_status = (data.get("payment_status") or "").lower()
                 order_id = data.get("order_id") or ""
                 if order_id.startswith("topup-"):
                     raw_id = order_id.split("topup-", 1)[1]
                     if raw_id.isdigit():
                         payment = Payment.query.get(int(raw_id))
+                        success_statuses = {"finished", "confirmed", "paid", "completed"}
                         if (
                             payment
                             and payment.type == "topup"
                             and payment.status != "paid"
-                            and payment_status in SUCCESS_STATUSES
+                            and payment_status in success_statuses
                         ):
                             user = User.query.get(payment.user_id)
                             if user:
@@ -475,18 +469,8 @@ def register_routes(app: Flask):
                                 )
                             payment.status = "paid"
                             db.session.commit()
-                        else:
-                            current_app.logger.info(
-                                f"Topup not credited for NP_id={np_id}, "
-                                f"status={payment_status}, payment={payment}"
-                            )
-                else:
-                    current_app.logger.info(
-                        f"NOWPayments NP_id={np_id} has non-topup order_id={order_id}"
-                    )
             except Exception as e:
                 current_app.logger.warning(f"Error processing NOWPayments NP_id {np_id}: {e}")
-
         topups = (
             Payment.query.filter_by(user_id=current_user.id, type="topup")
             .order_by(Payment.created_at.desc())
@@ -707,10 +691,6 @@ def register_routes(app: Flask):
         payment_id = str(data.get("payment_id") or data.get("invoice_id") or "")
         payment_status = (data.get("payment_status") or "").lower()
 
-        current_app.logger.info(
-            f"NOWPayments IPN received: payment_id={payment_id}, status={payment_status}, data={data}"
-        )
-
         if not payment_id:
             return "missing payment_id", 400
 
@@ -719,8 +699,10 @@ def register_routes(app: Flask):
             current_app.logger.warning(f"NOWPayments IPN: payment not found: {payment_id}")
             return "payment not found", 404
 
+        success_statuses = {"finished", "confirmed", "paid", "completed"}
+
         if payment.type == "topup":
-            if payment_status in SUCCESS_STATUSES and payment.status != "paid":
+            if payment_status in success_statuses and payment.status != "paid":
                 payment.status = "paid"
                 user = User.query.get(payment.user_id)
                 if user:
@@ -741,7 +723,7 @@ def register_routes(app: Flask):
                     pass
 
         elif payment.type == "label":
-            if payment_status in SUCCESS_STATUSES and payment.status != "paid":
+            if payment_status in success_statuses and payment.status != "paid":
                 payment.status = "paid"
                 order = Order.query.get(payment.order_id)
                 if order:
@@ -797,9 +779,7 @@ def register_routes(app: Flask):
         total_users = User.query.count()
         total_orders = Order.query.count()
         total_payments = Payment.query.count()
-        total_wallet_balance = db.session.query(
-            db.func.coalesce(db.func.sum(User.balance_usd), 0.0)
-        ).scalar()
+        total_wallet_balance = db.session.query(db.func.coalesce(db.func.sum(User.balance_usd), 0.0)).scalar()
         recent_orders = Order.query.order_by(Order.created_at.desc()).limit(10).all()
         recent_payments = Payment.query.order_by(Payment.created_at.desc()).limit(10).all()
         return render_template(
