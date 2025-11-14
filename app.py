@@ -184,14 +184,26 @@ def log_wallet_change(user, amount_change: float, reason: str):
 
 
 def verify_nowpayments_signature(raw_body: bytes, signature: str) -> bool:
+    """Verify NOWPayments IPN signature using sorted JSON body.
+
+    NOWPayments expects HMAC-SHA512 over JSON.stringify(params, Object.keys(params).sort()).
+    """
     secret = os.getenv("NOWPAYMENTS_IPN_SECRET", "")
     if not secret or not signature:
         return False
     try:
-        expected = hmac.new(secret.encode("utf-8"), raw_body, hashlib.sha512).hexdigest()
+        body_str = (raw_body or b"").decode("utf-8")
+        data = json.loads(body_str or "{}")
+        ordered = json.dumps(data, sort_keys=True, separators=(",", ":"))
+        expected = hmac.new(
+            secret.encode("utf-8"),
+            ordered.encode("utf-8"),
+            hashlib.sha512,
+        ).hexdigest()
     except Exception:
         return False
     return hmac.compare_digest(expected, signature)
+
 
 
 def create_nowpayments_invoice(order) -> dict:
@@ -205,7 +217,9 @@ def create_nowpayments_invoice(order) -> dict:
         "price_amount": order.amount_usd,
         "price_currency": "usd",
         "order_id": str(order.id),
-        "pay_currency": "btc",
+        # NOWPayments will send webhooks here
+        "ipn_callback_url": url_for("nowpayments_ipn", _external=True),
+        # Where the user gets sent back after payment
         "success_url": url_for("order_detail", order_id=order.id, _external=True),
         "cancel_url": url_for("orders", _external=True),
     }
@@ -228,7 +242,8 @@ def create_topup_invoice(payment) -> dict:
         "price_amount": payment.amount_usd,
         "price_currency": "usd",
         "order_id": f"topup-{payment.id}",
-        "pay_currency": "btc",
+        # Webhooks for wallet top-ups
+        "ipn_callback_url": url_for("nowpayments_ipn", _external=True),
         "success_url": url_for("wallet", _external=True),
         "cancel_url": url_for("wallet", _external=True),
     }
