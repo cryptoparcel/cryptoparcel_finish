@@ -1,200 +1,139 @@
-{% extends 'base.html' %}
-{% block title %}Create Shipping Label — CryptoParcel{% endblock %}
+{% extends "base.html" %}
 {% block content %}
-
-<section class="section">
-  <div class="page-header">
-    <div>
-      <h1>Create a Shipping Label</h1>
-      <p>Fill in the sender and recipient details, choose a service, and we’ll handle the rest.</p>
+<section class="cp-inner">
+    <div class="cp-inner-header">
+        <h1>Create a shipping label</h1>
+        <p>
+            Fill in your shipment details, choose a carrier, and pay in crypto.
+            Your label will be generated as a downloadable PDF.
+        </p>
     </div>
-    <div class="page-meta">
-      <div class="meta-item">
-        <span class="meta-label">Wallet balance</span>
-        <span class="meta-value">${{ (current_user.balance_usd or 0.0) | round(2) }}</span>
-      </div>
+
+    <div class="cp-inner-layout">
+        <form method="POST" action="/create-label" class="cp-form-card">
+            {% if csrf_token %}
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            {% endif %}
+
+            <h2>From address</h2>
+            <div class="cp-field-grid">
+                <div class="cp-field-group">
+                    <label>Full name</label>
+                    <input type="text" name="from_name" required>
+                </div>
+                <div class="cp-field-group">
+                    <label>Phone</label>
+                    <input type="text" name="from_phone">
+                </div>
+            </div>
+            <div class="cp-field-group">
+                <label>Street address</label>
+                <input type="text" name="from_address" required>
+            </div>
+            <div class="cp-field-grid">
+                <div class="cp-field-group">
+                    <label>City</label>
+                    <input type="text" name="from_city" required>
+                </div>
+                <div class="cp-field-group">
+                    <label>State</label>
+                    <input type="text" name="from_state" required>
+                </div>
+                <div class="cp-field-group">
+                    <label>ZIP</label>
+                    <input type="text" name="from_zip" required>
+                </div>
+            </div>
+
+            <h2>To address</h2>
+            <div class="cp-field-grid">
+                <div class="cp-field-group">
+                    <label>Full name</label>
+                    <input type="text" name="to_name" required>
+                </div>
+                <div class="cp-field-group">
+                    <label>Phone</label>
+                    <input type="text" name="to_phone">
+                </div>
+            </div>
+            <div class="cp-field-group">
+                <label>Street address</label>
+                <input type="text" name="to_address" required>
+            </div>
+            <div class="cp-field-grid">
+                <div class="cp-field-group">
+                    <label>City</label>
+                    <input type="text" name="to_city" required>
+                </div>
+                <div class="cp-field-group">
+                    <label>State</label>
+                    <input type="text" name="to_state" required>
+                </div>
+                <div class="cp-field-group">
+                    <label>ZIP</label>
+                    <input type="text" name="to_zip" required>
+                </div>
+            </div>
+
+            <h2>Package details</h2>
+            <div class="cp-field-grid">
+                <div class="cp-field-group">
+                    <label>Weight (lb)</label>
+                    <input type="number" step="0.01" name="weight_lb" required>
+                </div>
+                <div class="cp-field-group">
+                    <label>Length (in)</label>
+                    <input type="number" step="0.1" name="length_in">
+                </div>
+                <div class="cp-field-group">
+                    <label>Width (in)</label>
+                    <input type="number" step="0.1" name="width_in">
+                </div>
+                <div class="cp-field-group">
+                    <label>Height (in)</label>
+                    <input type="number" step="0.1" name="height_in">
+                </div>
+            </div>
+
+            <h2>Carrier &amp; service</h2>
+            <div class="cp-field-grid">
+                <div class="cp-field-group">
+                    <label>Carrier</label>
+                    <select name="carrier" required>
+                        <option value="usps">USPS</option>
+                        <option value="ups">UPS</option>
+                        <option value="fedex">FedEx</option>
+                    </select>
+                </div>
+                <div class="cp-field-group">
+                    <label>Service</label>
+                    <select name="service" required>
+                        <option value="priority">Priority / Ground</option>
+                        <option value="express">Express / Overnight</option>
+                        <option value="economy">Economy / Saver</option>
+                    </select>
+                </div>
+            </div>
+
+            <button type="submit" class="cp-btn-primary cp-full-width">
+                Review price &amp; pay with crypto
+            </button>
+        </form>
+
+        <aside class="cp-side-card">
+            <h3>Wallet &amp; payment</h3>
+            <p>
+                You can either pay per-label or use your CryptoParcel wallet balance for faster checkout.
+            </p>
+            <ul class="cp-side-list">
+                <li>Instant crypto payment detection</li>
+                <li>Automatic label generation as PDF</li>
+                <li>Track your label history in your account</li>
+            </ul>
+            <a href="/wallet" class="cp-btn-secondary cp-full-width">
+                Go to wallet
+            </a>
+        </aside>
     </div>
-  </div>
-
-  <div class="grid">
-    <!-- LEFT: FORM -->
-    <section class="card card-main">
-      <form method="POST" class="form">
-  {{ form.csrf_token }}
-
-  <!-- SERVICE & WEIGHT -->
-  <div class="section">
-    <h2>Service &amp; Package</h2>
-    <div class="grid-2">
-      <div class="field">
-        <label for="service">Service</label>
-        <select id="service" name="service" required>
-          <optgroup label="USPS">
-            <option value="USPS First-Class">USPS First-Class</option>
-            <option value="USPS Priority Mail">USPS Priority Mail</option>
-            <option value="USPS Priority Mail Express">USPS Priority Mail Express</option>
-          </optgroup>
-          <optgroup label="UPS">
-            <option value="UPS Ground">UPS Ground</option>
-            <option value="UPS 2nd Day Air">UPS 2nd Day Air</option>
-            <option value="UPS Next Day Air Saver">UPS Next Day Air Saver</option>
-          </optgroup>
-          <optgroup label="FedEx">
-            <option value="FedEx Ground">FedEx Ground</option>
-            <option value="FedEx Express Saver">FedEx Express Saver</option>
-            <option value="FedEx 2Day">FedEx 2Day</option>
-            <option value="FedEx Standard Overnight">FedEx Standard Overnight</option>
-          </optgroup>
-        </select>
-        <p class="help">More premium services will cost slightly more.</p>
-      </div>
-
-      <div class="field">
-        <label for="weight_oz">Package Weight (oz)</label>
-        <input id="weight_oz" type="number" step="0.1" min="0.1" name="weight_oz" placeholder="e.g. 12.5" required />
-        <p class="help">Use ounces (1 lb = 16 oz).</p>
-      </div>
-    </div>
-  </div>
-
-  
-  <!-- ESTIMATED PRICING -->
-  <div class="section">
-    <h2>Estimated pricing</h2>
-    <div class="card price-card" id="price-card">
-      <p class="balance-label">Estimated label price</p>
-      <p class="balance-amount" id="price-estimate">—</p>
-      <p class="muted">Estimate only. Final pricing is calculated on the server when you submit.</p>
-    </div>
-  </div>
-
-<!-- FROM ADDRESS -->
-  <div class="section">
-    <h2>From Address</h2>
-    <div class="grid-2">
-      <div class="field">
-        <label for="from_name">Name</label>
-        <input id="from_name" name="from_name" type="text" required />
-      </div>
-      <div class="field">
-        <label for="from_street1">Street</label>
-        <input id="from_street1" name="from_street1" type="text" required />
-      </div>
-    </div>
-    <div class="grid-2">
-      <div class="field">
-        <label for="from_street2">Apt/Suite (optional)</label>
-        <input id="from_street2" name="from_street2" type="text" />
-      </div>
-    </div>
-    <div class="grid-3">
-      <div class="field">
-        <label for="from_city">City</label>
-        <input id="from_city" name="from_city" type="text" required />
-      </div>
-      <div class="field">
-        <label for="from_state">State</label>
-        <input id="from_state" name="from_state" maxlength="2" placeholder="CA" type="text" required />
-      </div>
-      <div class="field">
-        <label for="from_zip">ZIP</label>
-        <input id="from_zip" name="from_zip" pattern="\d{5}(-\d{4})?" title="5 or 9-digit ZIP" required />
-      </div>
-    </div>
-  </div>
-
-  <!-- TO ADDRESS -->
-  <div class="section">
-    <h2>To Address</h2>
-    <div class="grid-2">
-      <div class="field">
-        <label for="to_name">Name</label>
-        <input id="to_name" name="to_name" type="text" required />
-      </div>
-      <div class="field">
-        <label for="to_street1">Street</label>
-        <input id="to_street1" name="to_street1" type="text" required />
-      </div>
-    </div>
-    <div class="grid-2">
-      <div class="field">
-        <label for="to_street2">Apt/Suite (optional)</label>
-        <input id="to_street2" name="to_street2" type="text" />
-      </div>
-    </div>
-    <div class="grid-3">
-      <div class="field">
-        <label for="to_city">City</label>
-        <input id="to_city" name="to_city" type="text" required />
-      </div>
-      <div class="field">
-        <label for="to_state">State</label>
-        <input id="to_state" name="to_state" maxlength="2" placeholder="TX" type="text" required />
-      </div>
-      <div class="field">
-        <label for="to_zip">ZIP</label>
-        <input id="to_zip" name="to_zip" pattern="\d{5}(-\d{4})?" title="5 or 9-digit ZIP" required />
-      </div>
-    </div>
-  </div>
-
-  <!-- REFERENCE -->
-  <div class="section">
-    <h2>Reference (Optional)</h2>
-    <div class="field">
-      <label for="reference">Order ID, notes, etc.</label>
-      <input id="reference" name="reference" type="text" placeholder="e.g. Amazon returns, Box #3" maxlength="100" />
-    </div>
-  </div>
-
-    <!-- PAYMENT & SUBMIT -->
-  <div class="section">
-    <h2>Payment preference</h2>
-    <div class="field">
-      <label>How would you like to pay?</label>
-      <div class="inline-form">
-        <label>
-          <input type="radio" name="payment_method" value="auto" checked>
-          Auto: wallet first, then crypto invoice
-        </label>
-        <label>
-          <input type="radio" name="payment_method" value="wallet">
-          Wallet only (fail if balance is too low)
-        </label>
-        <label>
-          <input type="radio" name="payment_method" value="crypto">
-          Always create a crypto invoice
-        </label>
-      </div>
-      <p class="help">You can change this per label; defaults to using your wallet balance first.</p>
-    </div>
-  </div>
-
-  <div class="actions">
-    <button type="submit" class="btn primary">Generate label &amp; continue</button>
-    <p class="help">
-      We’ll calculate the label price automatically. If your wallet balance is high enough, we’ll use it first,
-      otherwise you’ll be redirected to pay with crypto via NOWPayments.
-    </p>
-  </div>
-
-</form>
-
-    </section>
-
-    <!-- RIGHT: INFO SIDEBAR -->
-    <aside class="card card-side">
-      <h2>How Payment Works</h2>
-      <ol class="list">
-        <li>We calculate a simple placeholder rate based on service + weight.</li>
-        <li>If your wallet balance covers it, we auto-charge your wallet.</li>
-        <li>If not, you’ll be redirected to a crypto checkout.</li>
-      </ol>
-      <div class="info-box">
-        <p><strong>Tip:</strong> You can top up your wallet anytime on the Wallet page using crypto.</p>
-      </div>
-    </aside>
-  </div>
 </section>
-
 {% endblock %}

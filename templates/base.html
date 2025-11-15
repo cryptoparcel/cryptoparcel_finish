@@ -1,53 +1,48 @@
-
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>{% block title %}CryptoParcel{% endblock %}</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link href="{{ url_for('static', filename='styles.css') }}" rel="stylesheet">
-  <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+    <meta charset="UTF-8">
+    <title>CryptoParcel</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Main stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
-<header class="header">
-  <div class="container nav">
-    <a class="brand" href="{{ url_for('index') }}">
-      <img src="{{ url_for('static', filename='img/btc.svg') }}" alt="BTC" class="brand-icon">
-      <span>CryptoParcel</span>
-    </a>
-    <nav>
-      {% if current_user.is_authenticated %}
-      <a class="nav-link" href="{{ url_for('api_keys') }}">API keys</a>
-        <a href="{{ url_for('dashboard') }}">Dashboard</a>
-        <a href="{{ url_for('create_label') }}">Create Label</a>
-        <a href="{{ url_for('orders') }}">My Labels</a>
-        <a href="{{ url_for('wallet') }}">Wallet</a>
-        <a href="{{ url_for('logout') }}">Logout</a>
-      {% else %}
-        <a href="{{ url_for('login') }}">Login</a>
-        <a class="btn" href="{{ url_for('register') }}">Sign Up</a>
-      {% endif %}
-    </nav>
-  </div>
-</header>
+    <div class="cp-page">
+        <!-- Top nav -->
+        <header class="cp-nav">
+            <div class="cp-nav-left">
+                <div class="cp-logo">
+                    <span class="cp-logo-icon">📦</span>
+                    <span class="cp-logo-text">CryptoParcel</span>
+                </div>
+                <nav class="cp-nav-links">
+                    <a href="/">Home</a>
+                    <a href="/create-label">Create Label</a>
+                    <a href="/wallet">Wallet</a>
+                    <a href="/faq">FAQ</a>
+                </nav>
+            </div>
+            <div class="cp-nav-right">
+                <a href="/login" class="cp-nav-ghost">Log in</a>
+                <a href="/register" class="cp-nav-primary">Sign up</a>
+            </div>
+        </header>
 
-<main class="container main">
-  {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-      <div class="flash-area">
-        {% for category, msg in messages %}
-          <div class="flash {{ category }}">{{ msg }}</div>
-        {% endfor %}
-      </div>
-    {% endif %}
-  {% endwith %}
-  {% block content %}{% endblock %}
-</main>
+        <!-- Main content -->
+        <main class="cp-main">
+            {% block content %}{% endblock %}
+        </main>
 
-<footer class="footer">
-  <div class="container">
-    <p>© 2025 CryptoParcel</p>
-  </div>
-</footer>
+        <!-- Footer -->
+        <footer class="cp-footer">
+            <div>© {{ 2025 }} CryptoParcel. All rights reserved.</div>
+            <div class="cp-footer-links">
+                <a href="/terms">Terms</a>
+                <a href="/privacy">Privacy</a>
+                <a href="/support">Support</a>
+            </div>
+        </footer>
+    </div>
 </body>
 </html>
