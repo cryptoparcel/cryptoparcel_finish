@@ -57,7 +57,18 @@
     </div>
   </div>
 
-  <!-- FROM ADDRESS -->
+  
+  <!-- ESTIMATED PRICING -->
+  <div class="section">
+    <h2>Estimated pricing</h2>
+    <div class="card price-card" id="price-card">
+      <p class="balance-label">Estimated label price</p>
+      <p class="balance-amount" id="price-estimate">—</p>
+      <p class="muted">Estimate only. Final pricing is calculated on the server when you submit.</p>
+    </div>
+  </div>
+
+<!-- FROM ADDRESS -->
   <div class="section">
     <h2>From Address</h2>
     <div class="grid-2">
@@ -136,16 +147,39 @@
     </div>
   </div>
 
-  <!-- SUBMIT -->
+    <!-- PAYMENT & SUBMIT -->
+  <div class="section">
+    <h2>Payment preference</h2>
+    <div class="field">
+      <label>How would you like to pay?</label>
+      <div class="inline-form">
+        <label>
+          <input type="radio" name="payment_method" value="auto" checked>
+          Auto: wallet first, then crypto invoice
+        </label>
+        <label>
+          <input type="radio" name="payment_method" value="wallet">
+          Wallet only (fail if balance is too low)
+        </label>
+        <label>
+          <input type="radio" name="payment_method" value="crypto">
+          Always create a crypto invoice
+        </label>
+      </div>
+      <p class="help">You can change this per label; defaults to using your wallet balance first.</p>
+    </div>
+  </div>
+
   <div class="actions">
-    <button type="submit" class="btn primary">Generate Label &amp; Continue</button>
+    <button type="submit" class="btn primary">Generate label &amp; continue</button>
     <p class="help">
-      We’ll calculate the label price automatically.
-      If your wallet balance is high enough, we’ll use it first.
-      Otherwise you’ll be redirected to pay with crypto via NOWPayments.
+      We’ll calculate the label price automatically. If your wallet balance is high enough, we’ll use it first,
+      otherwise you’ll be redirected to pay with crypto via NOWPayments.
     </p>
   </div>
+
 </form>
+
     </section>
 
     <!-- RIGHT: INFO SIDEBAR -->
