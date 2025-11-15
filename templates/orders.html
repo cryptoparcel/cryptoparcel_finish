@@ -2,15 +2,28 @@
 {% block title %}Orders — CryptoParcel{% endblock %}
 {% block content %}
 <section class="section">
-  <h2>All Orders</h2>
-  <p class="muted">Every label you create will appear here. Paid orders let you download the label PDF and tracking.</p>
+  <div class="page-header">
+    <div>
+      <h2>All orders</h2>
+      <p class="muted">Every label you create will appear here. Paid orders let you download the label PDF and tracking.</p>
+    </div>
+    <div class="page-meta">
+      <a class="btn secondary" href="{{ url_for('orders_export') }}">Export CSV</a>
+    </div>
+  </div>
   <div class="grid">
   {% for order in orders %}
     <div class="card">
       <h4>Order #{{ order.id }}</h4>
       <p>{{ order.carrier }} — {{ order.service }}</p>
+      {% if order.reference %}
+        <p class="muted">Reference: {{ order.reference }}</p>
+      {% endif %}
       <p>Amount: ${{ '%.2f'|format(order.amount_usd) }}</p>
-      <p>Status: {{ order.status }}</p>
+      <p>
+        Status:
+        <span class="status-badge status-badge-{{ order.status }}">{{ order.status }}</span>
+      </p>
       <a class="btn secondary" href="{{ url_for('order_detail', order_id=order.id) }}">View</a>
     </div>
   {% else %}

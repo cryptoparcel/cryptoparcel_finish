@@ -431,3 +431,202 @@ body.cp-body {
 .cp-footer-right {
     opacity: 0.85;
 }
+
+
+/* Layout helpers */
+.section {
+  padding: 2rem 0;
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.page-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.meta-item {
+  text-align: right;
+}
+
+.meta-label {
+  display: block;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #9ca3af;
+}
+
+.meta-value {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.muted {
+  color: #9ca3af;
+  font-size: 0.9rem;
+}
+
+.balance-label {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #9ca3af;
+}
+
+.balance-amount {
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 1.5rem;
+}
+
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.grid-3 > .field {
+  min-width: 0;
+}
+
+.grid-3 input {
+  width: 100%;
+}
+
+/* Status badges */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.status-badge-paid,
+.status-badge-confirmed,
+.status-badge-finished {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+}
+
+.status-badge-pending_payment {
+  background: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+}
+
+.status-badge-payment_error,
+.status-badge-cancelled,
+.status-badge-cancelled_auto {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+/* Price card */
+.price-card {
+  border: 1px solid #374151;
+  border-radius: 1rem;
+  padding: 1rem 1.25rem;
+  background: linear-gradient(135deg, rgba(31,41,55,0.9), rgba(17,24,39,0.95));
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+}
+
+.price-card-active {
+  border-color: #22c55e;
+  box-shadow: 0 10px 25px rgba(34, 197, 94, 0.2);
+  transform: translateY(-2px);
+}
+
+/* Analytics bars */
+.analytics-grid {
+  align-items: flex-start;
+}
+
+.analytics-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.analytics-bar-row {
+  display: grid;
+  grid-template-columns: 7rem minmax(0, 1fr) 3.5rem;
+  gap: 0.5rem;
+  align-items: center;
+  font-size: 0.85rem;
+}
+
+.analytics-bar-label {
+  color: #9ca3af;
+}
+
+.analytics-bar-track {
+  position: relative;
+  height: 0.4rem;
+  border-radius: 999px;
+  background: #111827;
+  overflow: hidden;
+}
+
+.analytics-bar-fill {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #22c55e, #3b82f6);
+}
+
+.analytics-bar-value {
+  text-align: right;
+}
+
+/* Forms */
+.form .inline-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-top: 0.25rem;
+}
+
+.form .inline-form label {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+  font-size: 0.9rem;
+}
+
+.form .help {
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  color: #9ca3af;
+}
+
+/* Small buttons */
+.btn.small {
+  padding: 0.25rem 0.6rem;
+  font-size: 0.8rem;
+}
+
+/* Code blocks */
+.code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 0.8rem;
+  background: #020617;
+  padding: 0.35rem 0.5rem;
+  border-radius: 0.4rem;
+  word-break: break-all;
+}

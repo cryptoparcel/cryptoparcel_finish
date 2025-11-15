@@ -20,6 +20,7 @@ from flask_login import (
 )
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+from sqlalchemy import func
 
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -33,6 +34,7 @@ import hashlib
 import requests
 import smtplib
 import json
+import secrets
 from email.message import EmailMessage
 
 from config import Config
@@ -366,6 +368,8 @@ def register_routes(app: Flask):
     @login_required
     def dashboard():
         run_auto_cleanup()
+        from models import Order, WalletLog
+
         recent_orders = (
             Order.query.filter_by(user_id=current_user.id)
             .order_by(Order.created_at.desc())
@@ -373,15 +377,45 @@ def register_routes(app: Flask):
             .all()
         )
         balance = current_user.balance_usd or 0.0
+
+        total_orders = (
+            db.session.query(func.count(Order.id))
+            .filter(Order.user_id == current_user.id)
+            .scalar()
+            or 0
+        )
+        total_spent = (
+            db.session.query(func.coalesce(func.sum(Order.amount_usd), 0.0))
+            .filter(
+                Order.user_id == current_user.id,
+                Order.status.in_(["paid", "confirmed", "finished"]),
+            )
+            .scalar()
+            or 0.0
+        )
+
+        wallet_logs = (
+            WalletLog.query.filter_by(user_id=current_user.id)
+            .order_by(WalletLog.created_at.desc())
+            .limit(5)
+            .all()
+        )
+
         return render_template(
             "dashboard.html",
             orders=recent_orders,
             balance=balance,
+            total_orders=total_orders,
+            total_spent=total_spent,
+            wallet_logs=wallet_logs,
         )
 
     @app.route("/orders")
     @login_required
     def orders():
+        from models import Order
+
+        run_auto_cleanup()
         orders = (
             Order.query.filter_by(user_id=current_user.id)
             .order_by(Order.created_at.desc())
@@ -392,51 +426,205 @@ def register_routes(app: Flask):
     @app.route("/orders/<int:order_id>")
     @login_required
     def order_detail(order_id):
+        from models import Order
+
         order = Order.query.get_or_404(order_id)
         if order.user_id != current_user.id and not is_admin():
             flash("Unauthorized", "error")
             return redirect(url_for("orders"))
         return render_template("order_detail.html", order=order)
 
-    @app.route("/orders/<int:order_id>/label")
+    @app.route("/orders/export")
     @login_required
-    def download_label(order_id):
-        order = Order.query.get_or_404(order_id)
-        if order.user_id != current_user.id and not is_admin():
-            flash("Unauthorized", "error")
-            return redirect(url_for("orders"))
+    def orders_export():
+        from models import Order
 
-        if order.status != "paid":
-            flash("This label is not yet paid.", "error")
-            return redirect(url_for("order_detail", order_id=order.id))
-
-        pdf_bytes = generate_shipping_label_pdf(order)
-        return send_file(
-            io.BytesIO(pdf_bytes),
-            mimetype="application/pdf",
-            as_attachment=True,
-            download_name=f"label_{order.id}.pdf",
+        orders = (
+            Order.query.filter_by(user_id=current_user.id)
+            .order_by(Order.created_at.desc())
+            .all()
         )
 
-    @app.route("/orders/<int:order_id>/cancel", methods=["POST"])
+        import io as _io
+        import csv as _csv
+
+        buf = _io.StringIO()
+        writer = _csv.writer(buf)
+        writer.writerow(
+            [
+                "id",
+                "created_at",
+                "carrier",
+                "service",
+                "reference",
+                "weight_oz",
+                "amount_usd",
+                "status",
+            ]
+        )
+        for o in orders:
+            writer.writerow(
+                [
+                    o.id,
+                    o.created_at.isoformat() if getattr(o, "created_at", None) else "",
+                    o.carrier,
+                    o.service,
+                    getattr(o, "reference", "") or "",
+                    getattr(o, "weight_oz", 0.0),
+                    getattr(o, "amount_usd", 0.0),
+                    o.status,
+                ]
+            )
+
+        from flask import make_response
+
+        resp = make_response(buf.getvalue())
+        resp.headers["Content-Type"] = "text/csv"
+        resp.headers["Content-Disposition"] = "attachment; filename=orders.csv"
+        return resp
+
+    @app.route("/analytics")
     @login_required
-    def cancel_order(order_id):
-        order = Order.query.get_or_404(order_id)
-        if order.user_id != current_user.id and not is_admin():
-            flash("Unauthorized", "error")
-            return redirect(url_for("orders"))
+    def analytics():
+        from models import Order
 
-        if order.status not in ("pending_payment", "payment_error"):
-            flash("This order cannot be cancelled.", "error")
-            return redirect(url_for("order_detail", order_id=order.id))
+        orders = (
+            Order.query.filter_by(user_id=current_user.id)
+            .order_by(Order.created_at.desc())
+            .limit(200)
+            .all()
+        )
 
-        order.status = "cancelled"
-        db.session.commit()
-        flash("Order cancelled.", "info")
-        return redirect(url_for("orders"))
+        daily_counts = {}
+        daily_totals = {}
+        by_carrier = {}
+        by_service = {}
 
-    # ----------------------- WALLET -----------------------
+        for o in orders:
+            if not getattr(o, "created_at", None):
+                continue
+            day = o.created_at.date().isoformat()
+            daily_counts[day] = daily_counts.get(day, 0) + 1
+            amt = float(getattr(o, "amount_usd", 0.0) or 0.0)
+            daily_totals[day] = daily_totals.get(day, 0.0) + amt
+            carrier = o.carrier or "Unknown"
+            by_carrier[carrier] = by_carrier.get(carrier, 0) + 1
+            service = o.service or "Unknown"
+            by_service[service] = by_service.get(service, 0) + 1
 
+        daily_labels = sorted(daily_counts.items())
+        daily_spent = sorted(daily_totals.items())
+        total_orders = sum(daily_counts.values())
+        total_spent = sum(daily_totals.values())
+
+        return render_template(
+            "analytics.html",
+            daily_labels=daily_labels,
+            daily_spent=daily_spent,
+            by_carrier=by_carrier,
+            by_service=by_service,
+            total_orders=total_orders,
+            total_spent=total_spent,
+        )
+
+    @app.route("/bulk-labels", methods=["GET", "POST"])
+    @login_required
+    def bulk_labels():
+        from models import Order
+
+        if request.method == "POST":
+            file = request.files.get("file")
+            if not file or not file.filename:
+                flash("Please choose a CSV file to upload.", "error")
+                return redirect(url_for("bulk_labels"))
+
+            import io as _io
+            import csv as _csv
+
+            try:
+                content = file.read().decode("utf-8", errors="ignore")
+                reader = _csv.DictReader(content.splitlines())
+            except Exception:
+                flash("Could not read CSV file.", "error")
+                return redirect(url_for("bulk_labels"))
+
+            required_cols = [
+                "from_name",
+                "from_street1",
+                "from_city",
+                "from_state",
+                "from_zip",
+                "to_name",
+                "to_street1",
+                "to_city",
+                "to_state",
+                "to_zip",
+                "carrier",
+                "service",
+                "weight_oz",
+            ]
+            missing = [c for c in required_cols if c not in (reader.fieldnames or [])]
+            if missing:
+                flash(f"Missing required columns: {', '.join(missing)}", "error")
+                return redirect(url_for("bulk_labels"))
+
+            created = 0
+            for row in reader:
+                try:
+                    weight_oz = float(row.get("weight_oz") or 0.0)
+                    if weight_oz <= 0:
+                        continue
+
+                    from_address = (
+                        f"{row.get('from_name','')}".strip()
+                        + "\n"
+                        + f"{row.get('from_street1','')}".strip()
+                        + "\n"
+                        + f"{row.get('from_city','')}, {row.get('from_state','')} {row.get('from_zip','')}"
+                        + "\nUnited States"
+                    )
+                    to_address = (
+                        f"{row.get('to_name','')}".strip()
+                        + "\n"
+                        + f"{row.get('to_street1','')}".strip()
+                        + "\n"
+                        + f"{row.get('to_city','')}, {row.get('to_state','')} {row.get('to_zip','')}"
+                        + "\nUnited States"
+                    )
+                    reference = (row.get("reference") or "").strip()
+                    carrier = (row.get("carrier") or "").strip()
+                    service = (row.get("service") or "").strip()
+
+                    amount_usd = calculate_label_price(carrier, service, weight_oz)
+
+                    order = Order(
+                        user_id=current_user.id,
+                        carrier=carrier,
+                        service=service,
+                        weight_oz=weight_oz,
+                        from_address=from_address,
+                        to_address=to_address,
+                        reference=reference,
+                        amount_usd=amount_usd,
+                        status="pending_payment",
+                    )
+                    db.session.add(order)
+                    created += 1
+                except Exception:
+                    continue
+
+            if created:
+                db.session.commit()
+                flash(
+                    f"Created {created} bulk orders. You can pay them from the Orders page.",
+                    "success",
+                )
+            else:
+                flash("No valid rows found in CSV.", "error")
+
+            return redirect(url_for("bulk_labels"))
+
+        return render_template("bulk_labels.html")
     @app.route("/wallet")
     @login_required
     def wallet():
@@ -967,3 +1155,35 @@ app = create_app()
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 8000)), debug=True)
+
+@app.route("/api-keys", methods=["GET", "POST"])
+@login_required
+def api_keys():
+    from models import APIKey
+
+    if request.method == "POST":
+        action = request.form.get("action")
+        if action == "create":
+            name = (request.form.get("name") or "").strip() or "API key"
+            raw_key = secrets.token_hex(32)
+            api_key = APIKey(user_id=current_user.id, name=name, key=raw_key)
+            db.session.add(api_key)
+            db.session.commit()
+            flash("New API key created.", "success")
+            return redirect(url_for("api_keys"))
+        elif action == "toggle":
+            key_id = request.form.get("key_id", type=int)
+            if key_id:
+                api_key = APIKey.query.get(key_id)
+                if api_key and api_key.user_id == current_user.id:
+                    api_key.is_active = not api_key.is_active
+                    db.session.commit()
+                    flash("API key updated.", "success")
+            return redirect(url_for("api_keys"))
+
+    keys = (
+        APIKey.query.filter_by(user_id=current_user.id)
+        .order_by(APIKey.created_at.desc())
+        .all()
+    )
+    return render_template("api_keys.html", keys=keys)

@@ -1,19 +1,87 @@
-
 {% extends 'base.html' %}
 {% block title %}Dashboard — CryptoParcel{% endblock %}
 {% block content %}
-<h2>Your Dashboard</h2>
-<a href="{{ url_for('create_label') }}" class="btn primary">Create New Label</a>
-<h3>Your Recent Orders</h3>
-<div class="grid">
-{% for order in orders %}
-  <div class="card">
-    <h4>Order #{{ order.id }}</h4>
-    <p>Status: {{ order.status }}</p>
-    <a href="{{ url_for('order_detail', order_id=order.id) }}" class="btn">View</a>
+<section class="section">
+  <div class="page-header">
+    <div>
+      <h1>Your dashboard</h1>
+      <p class="muted">A quick snapshot of your wallet, label history, and recent activity.</p>
+    </div>
+    <div class="page-meta">
+      <div class="meta-item">
+        <span class="meta-label">Wallet balance</span>
+        <span class="meta-value">${{ '%.2f'|format(balance) }}</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Total labels</span>
+        <span class="meta-value">{{ total_orders }}</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Total spent</span>
+        <span class="meta-value">${{ '%.2f'|format(total_spent) }}</span>
+      </div>
+    </div>
   </div>
-{% else %}
-  <p>No orders yet.</p>
-{% endfor %}
-</div>
+
+  <div class="card">
+    <div class="grid-3">
+      <div>
+        <p class="balance-label">Current balance</p>
+        <p class="balance-amount">${{ '%.2f'|format(balance) }}</p>
+        <p class="muted">Available for new labels.</p>
+      </div>
+      <div>
+        <p class="balance-label">Labels created</p>
+        <p class="balance-amount">{{ total_orders }}</p>
+        <p class="muted">Across your entire account.</p>
+      </div>
+      <div>
+        <p class="balance-label">Next step</p>
+        <p class="muted">Generate a new shipping label using wallet or crypto.</p>
+        <a href="{{ url_for('create_label') }}" class="btn primary">Create new label</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <h2>Your recent orders</h2>
+  {% if orders %}
+    <div class="grid">
+      {% for order in orders %}
+        <div class="card">
+          <h4>Order #{{ order.id }}</h4>
+          <p>{{ order.carrier }} — {{ order.service }}</p>
+          <p>Amount: ${{ '%.2f'|format(order.amount_usd) }}</p>
+          <p>
+            Status:
+            <span class="status-badge status-badge-{{ order.status }}">{{ order.status }}</span>
+          </p>
+          <a href="{{ url_for('order_detail', order_id=order.id) }}" class="btn secondary">View</a>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="muted">No orders yet. <a href="{{ url_for('create_label') }}">Create your first label</a>.</p>
+  {% endif %}
+</section>
+
+<section class="section">
+  <h2>Recent wallet activity</h2>
+  {% if wallet_logs %}
+    <div class="grid">
+      {% for log in wallet_logs %}
+        <div class="card">
+          <p>
+            {% if log.amount_change >= 0 %}+{% endif %}{{ '%.2f'|format(log.amount_change) }}
+            — {{ log.reason or 'Balance adjustment' }}
+          </p>
+          <p class="muted">{{ log.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="muted">No wallet activity yet.</p>
+  {% endif %}
+</section>
 {% endblock %}
