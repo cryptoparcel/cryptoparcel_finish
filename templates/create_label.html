@@ -60,30 +60,6 @@
   <!-- FROM ADDRESS -->
   <div class="section">
     <h2>From Address</h2>
-
-    {% if from_profiles %}
-    <div class="field">
-      <label for="from_profile_select">Saved sender profiles</label>
-      <select id="from_profile_select">
-        <option value="">— Select saved from address —</option>
-        {% for p in from_profiles %}
-        <option
-          value="{{ p.id }}"
-          data-name="{{ p.name or '' }}"
-          data-street1="{{ p.street1 }}"
-          data-street2="{{ p.street2 or '' }}"
-          data-city="{{ p.city }}"
-          data-state="{{ p.state }}"
-          data-zip="{{ p.zip }}"
-        >
-          {{ p.label }} ({{ p.city }}, {{ p.state }})
-        </option>
-        {% endfor %}
-      </select>
-      <p class="help">Choose a saved sender profile to auto-fill the fields below.</p>
-    </div>
-    {% endif %}
-
     <div class="grid-2">
       <div class="field">
         <label for="from_name">Name</label>
@@ -94,33 +70,31 @@
         <input id="from_street1" name="from_street1" type="text" required />
       </div>
     </div>
-    <div c<!-- TO ADDRESS -->
+    <div class="grid-2">
+      <div class="field">
+        <label for="from_street2">Apt/Suite (optional)</label>
+        <input id="from_street2" name="from_street2" type="text" />
+      </div>
+    </div>
+    <div class="grid-3">
+      <div class="field">
+        <label for="from_city">City</label>
+        <input id="from_city" name="from_city" type="text" required />
+      </div>
+      <div class="field">
+        <label for="from_state">State</label>
+        <input id="from_state" name="from_state" maxlength="2" placeholder="CA" type="text" required />
+      </div>
+      <div class="field">
+        <label for="from_zip">ZIP</label>
+        <input id="from_zip" name="from_zip" pattern="\d{5}(-\d{4})?" title="5 or 9-digit ZIP" required />
+      </div>
+    </div>
+  </div>
+
+  <!-- TO ADDRESS -->
   <div class="section">
     <h2>To Address</h2>
-
-    {% if to_profiles %}
-    <div class="field">
-      <label for="to_profile_select">Saved recipient profiles</label>
-      <select id="to_profile_select">
-        <option value="">— Select saved to address —</option>
-        {% for p in to_profiles %}
-        <option
-          value="{{ p.id }}"
-          data-name="{{ p.name or '' }}"
-          data-street1="{{ p.street1 }}"
-          data-street2="{{ p.street2 or '' }}"
-          data-city="{{ p.city }}"
-          data-state="{{ p.state }}"
-          data-zip="{{ p.zip }}"
-        >
-          {{ p.label }} ({{ p.city }}, {{ p.state }})
-        </option>
-        {% endfor %}
-      </select>
-      <p class="help">Pick a saved destination to auto-fill.</p>
-    </div>
-    {% endif %}
-
     <div class="grid-2">
       <div class="field">
         <label for="to_name">Name</label>
@@ -188,44 +162,5 @@
     </aside>
   </div>
 </section>
-
-
-
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-  function applyAddressProfile(selectId, prefix) {
-    var selectEl = document.getElementById(selectId);
-    if (!selectEl) return;
-    selectEl.addEventListener("change", function () {
-      var opt = selectEl.options[selectEl.selectedIndex];
-      if (!opt || !opt.value) return;
-
-      var name = opt.getAttribute("data-name") || "";
-      var street1 = opt.getAttribute("data-street1") || "";
-      var street2 = opt.getAttribute("data-street2") || "";
-      var city = opt.getAttribute("data-city") || "";
-      var state = opt.getAttribute("data-state") || "";
-      var zip = opt.getAttribute("data-zip") || "";
-
-      var nameInput = document.getElementById(prefix + "_name");
-      var street1Input = document.getElementById(prefix + "_street1");
-      var street2Input = document.getElementById(prefix + "_street2");
-      var cityInput = document.getElementById(prefix + "_city");
-      var stateInput = document.getElementById(prefix + "_state");
-      var zipInput = document.getElementById(prefix + "_zip");
-
-      if (nameInput) nameInput.value = name;
-      if (street1Input) street1Input.value = street1;
-      if (street2Input) street2Input.value = street2;
-      if (cityInput) cityInput.value = city;
-      if (stateInput) stateInput.value = state;
-      if (zipInput) zipInput.value = zip;
-    });
-  }
-
-  applyAddressProfile("from_profile_select", "from");
-  applyAddressProfile("to_profile_select", "to");
-});
-</script>
 
 {% endblock %}

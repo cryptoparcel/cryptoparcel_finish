@@ -9,7 +9,6 @@ from flask import (
     jsonify,
     session,
     current_app,
-    abort,
 )
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import (
@@ -286,22 +285,7 @@ def run_auto_cleanup():
 
 
 def register_routes(app: Flask):
-    from models import User, Order, Payment, WalletLog, AddressProfile, TeamMembership
-
-
-    def current_user_role():
-        if not current_user.is_authenticated:
-            return "anonymous"
-        membership = TeamMembership.query.filter_by(user_id=current_user.id).first()
-        return membership.role if membership else "owner"
-
-    @app.context_processor
-    def inject_role():
-        if not current_user.is_authenticated:
-            return {"current_role": "anonymous"}
-        membership = TeamMembership.query.filter_by(user_id=current_user.id).first()
-        role = membership.role if membership else "owner"
-        return {"current_role": role}
+    from models import User, Order, Payment, WalletLog
 
     # ----------------------- BASIC ROUTES -----------------------
 
@@ -345,11 +329,6 @@ def register_routes(app: Flask):
                 password_hash=generate_password_hash(password),
             )
             db.session.add(user)
-            db.session.commit()
-
-            # Create default team membership as owner
-            membership = TeamMembership(user_id=user.id, role="owner")
-            db.session.add(membership)
             db.session.commit()
 
             flash("Account created. Please log in.", "success")
@@ -461,8 +440,6 @@ def register_routes(app: Flask):
     @app.route("/wallet")
     @login_required
     def wallet():
-        if current_user_role() != "owner":
-            abort(403)
         # Check for NOWPayments redirect with NP_id and credit wallet if needed
         np_id = request.args.get("NP_id") or request.args.get("np_id")
         if np_id:
@@ -516,8 +493,6 @@ def register_routes(app: Flask):
     @app.route("/wallet/topup", methods=["GET", "POST"])
     @login_required
     def wallet_topup():
-        if current_user_role() != "owner":
-            abort(403)
         if request.method == "POST":
             amount_str = request.form.get("amount_usd") or "0"
             try:
@@ -557,107 +532,9 @@ def register_routes(app: Flask):
 
             return redirect(invoice.get("invoice_url"))
 
-
         return render_template("wallet_topup.html", balance=current_user.balance_usd or 0.0)
 
-    @app.route("/addresses", methods=["GET", "POST"])
-    @login_required
-    def addresses():
-        if request.method == "POST":
-            action = request.form.get("action") or "create"
-
-            if action == "delete":
-                profile_id = request.form.get("profile_id", type=int)
-                if profile_id:
-                    profile = AddressProfile.query.get(profile_id)
-                    if profile and profile.user_id == current_user.id:
-                        db.session.delete(profile)
-                        db.session.commit()
-                        flash("Address removed.", "success")
-                return redirect(url_for("addresses"))
-
-            kind = (request.form.get("kind") or "from").lower()
-            if kind not in ("from", "to"):
-                kind = "from"
-
-            label = (request.form.get("label") or "").strip()
-            name = (request.form.get("name") or "").strip()
-            street1 = (request.form.get("street1") or "").strip()
-            street2 = (request.form.get("street2") or "").strip()
-            city = (request.form.get("city") or "").strip()
-            state = (request.form.get("state") or "").strip()
-            zip_code = (request.form.get("zip") or "").strip()
-            country = (request.form.get("country") or "United States").strip()
-
-            if not (label and street1 and city and state and zip_code):
-                flash("Please fill in label, street, city, state, and ZIP.", "error")
-            else:
-                profile = AddressProfile(
-                    user_id=current_user.id,
-                    kind=kind,
-                    label=label,
-                    name=name,
-                    street1=street1,
-                    street2=street2,
-                    city=city,
-                    state=state,
-                    zip=zip_code,
-                    country=country or "United States",
-                )
-                db.session.add(profile)
-                db.session.commit()
-                flash("Address saved.", "success")
-
-            return redirect(url_for("addresses"))
-
-        profiles = (
-            AddressProfile.query.filter_by(user_id=current_user.id)
-            .order_by(AddressProfile.created_at.desc())
-            .all()
-        )
-        from_profiles = [p for p in profiles if p.kind == "from"]
-        to_profiles = [p for p in profiles if p.kind == "to"]
-
-        return render_template(
-            "addresses.html",
-            from_profiles=from_profiles,
-            to_profiles=to_profiles,
-        )
-
-    @app.route("/team", methods=["GET", "POST"])
-    @login_required
-    def team():
-        if current_user_role() != "owner":
-            abort(403)
-
-        users = User.query.order_by(User.created_at.asc()).all()
-
-        if request.method == "POST":
-            user_id = request.form.get("user_id", type=int)
-            role = (request.form.get("role") or "staff").lower()
-
-            if user_id and role in ("owner", "staff"):
-                membership = TeamMembership.query.filter_by(user_id=user_id).first()
-                if membership is None:
-                    membership = TeamMembership(user_id=user_id, role=role)
-                    db.session.add(membership)
-                else:
-                    membership.role = role
-                db.session.commit()
-                flash("Team member role updated.", "success")
-
-            return redirect(url_for("team"))
-
-        roles = {}
-        for u in users:
-            membership = TeamMembership.query.filter_by(user_id=u.id).first()
-            roles[u.id] = membership.role if membership else "owner"
-
-        return render_template("team.html", users=users, roles=roles)
-
-
     # ----------------------- CREATE LABEL (wallet-first + options) -----------------------
-
 
     @app.route("/create-label", methods=["GET", "POST"])
     @login_required
@@ -862,20 +739,10 @@ def register_routes(app: Flask):
 
             return redirect(invoice.get("invoice_url"))
 
-        # GET: show form with balance and any saved address profiles
-        profiles = (
-            AddressProfile.query.filter_by(user_id=current_user.id)
-            .order_by(AddressProfile.created_at.desc())
-            .all()
-        )
-        from_profiles = [p for p in profiles if p.kind == "from"]
-        to_profiles = [p for p in profiles if p.kind == "to"]
-
+        # GET: show form with balance
         return render_template(
             "create_label.html",
             balance=current_user.balance_usd or 0.0,
-            from_profiles=from_profiles,
-            to_profiles=to_profiles,
         )
 
     # ----------------------- NOWPAYMENTS IPN -----------------------
