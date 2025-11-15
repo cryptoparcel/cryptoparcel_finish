@@ -6,7 +6,7 @@
   <div class="card">
     <p class="balance-label">Current balance</p>
     <p class="balance-amount">${{ '%.2f'|format(balance) }}</p>
-    <p class="muted">Your wallet balance is used first when you create a label. If it's not enough, you can pay the rest via crypto invoice.</p>
+    <p class="muted">Your wallet balance is used first when you create a label. If it&apos;s not enough, you can pay the rest via crypto invoice.</p>
     <a class="btn primary" href="{{ url_for('wallet_topup') }}">Top up balance</a>
     <a class="btn secondary" href="{{ url_for('create_label') }}">Create a label</a>
   </div>

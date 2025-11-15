@@ -5,10 +5,9 @@
   <h2>Top up wallet</h2>
   <p>Your current balance: <strong>${{ '%.2f'|format(balance) }}</strong></p>
   <form method="POST" class="card form">
-  {{ form.csrf_token }}
-  <label>Amount (USD)</label>
-  <input type="number" name="amount_usd" step="0.01" min="1" max="5000" required>
-  <button class="btn primary">Create crypto invoice</button>
-</form>
+    <label>Amount (USD)</label>
+    <input type="number" name="amount_usd" step="0.01" min="1" max="5000" required>
+    <button class="btn primary">Create crypto invoice</button>
+  </form>
 </section>
 {% endblock %}

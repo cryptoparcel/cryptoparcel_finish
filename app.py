@@ -8,7 +8,6 @@ from flask import (
     send_file,
     jsonify,
     session,
-    current_app,
 )
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import (
@@ -20,7 +19,6 @@ from flask_login import (
 )
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-from sqlalchemy import func
 
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -33,9 +31,8 @@ import hmac
 import hashlib
 import requests
 import smtplib
-import json
-import secrets
 from email.message import EmailMessage
+from sqlalchemy.exc import ProgrammingError
 
 from config import Config
 from label_generator import generate_shipping_label_pdf
@@ -95,7 +92,14 @@ def create_app():
     with app.app_context():
         # Import models so SQLAlchemy is aware of them
         from models import User, Order, Payment, WalletLog  # noqa: F401
-        db.create_all()
+        try:
+            db.create_all()
+        except ProgrammingError as e:
+            msg = str(e).lower()
+            if "duplicate" in msg or "already exists" in msg:
+                app.logger.warning("db.create_all skipped: tables already exist (ProgrammingError)")
+            else:
+                raise
 
     register_routes(app)
     return app
@@ -180,36 +184,14 @@ def log_wallet_change(user, amount_change: float, reason: str):
 
 
 def verify_nowpayments_signature(raw_body: bytes, signature: str) -> bool:
-    """Verify NOWPayments IPN signature using sorted JSON body.
-
-    NOWPayments expects HMAC-SHA512 over JSON.stringify(params, Object.keys(params).sort())."""
     secret = os.getenv("NOWPAYMENTS_IPN_SECRET", "")
     if not secret or not signature:
         return False
     try:
-        body_str = (raw_body or b"").decode("utf-8")
-        data = json.loads(body_str or "{}")
-        ordered = json.dumps(data, sort_keys=True, separators=(",", ":"))
-        expected = hmac.new(
-            secret.encode("utf-8"),
-            ordered.encode("utf-8"),
-            hashlib.sha512,
-        ).hexdigest()
+        expected = hmac.new(secret.encode("utf-8"), raw_body, hashlib.sha512).hexdigest()
     except Exception:
         return False
     return hmac.compare_digest(expected, signature)
-
-
-def get_nowpayments_payment(payment_id: str) -> dict:
-    """Fetch a single NOWPayments payment by its payment_id."""
-    api_key = os.getenv("NOWPAYMENTS_API_KEY")
-    base_url = os.getenv("NOWPAYMENTS_BASE_URL", "https://api.nowpayments.io")
-    url = f"{base_url.rstrip('/')}/v1/payment/{payment_id}"
-    headers = {"x-api-key": api_key} if api_key else {}
-    current_app.logger.info(f"Fetching NOWPayments payment status for payment_id={payment_id}")
-    resp = requests.get(url, headers=headers, timeout=30)
-    resp.raise_for_status()
-    return resp.json()
 
 
 def create_nowpayments_invoice(order) -> dict:
@@ -217,11 +199,13 @@ def create_nowpayments_invoice(order) -> dict:
     base_url = os.getenv("NOWPAYMENTS_BASE_URL", "https://api.nowpayments.io")
     url = f"{base_url.rstrip('/')}/v1/invoice"
 
+    from flask import current_app
+
     payload = {
         "price_amount": order.amount_usd,
         "price_currency": "usd",
         "order_id": str(order.id),
-        "ipn_callback_url": url_for("nowpayments_ipn", _external=True),
+        "pay_currency": "btc",
         "success_url": url_for("order_detail", order_id=order.id, _external=True),
         "cancel_url": url_for("orders", _external=True),
     }
@@ -238,11 +222,13 @@ def create_topup_invoice(payment) -> dict:
     base_url = os.getenv("NOWPAYMENTS_BASE_URL", "https://api.nowpayments.io")
     url = f"{base_url.rstrip('/')}/v1/invoice"
 
+    from flask import current_app
+
     payload = {
         "price_amount": payment.amount_usd,
         "price_currency": "usd",
         "order_id": f"topup-{payment.id}",
-        "ipn_callback_url": url_for("nowpayments_ipn", _external=True),
+        "pay_currency": "btc",
         "success_url": url_for("wallet", _external=True),
         "cancel_url": url_for("wallet", _external=True),
     }
@@ -263,22 +249,22 @@ def run_auto_cleanup():
     # Cancel orders stuck in pending or payment_error > 15 minutes
     cutoff_orders = now - timedelta(minutes=15)
     stale_orders = (
-            Order.query.filter(
-                Order.status.in_(["pending_payment", "payment_error"]),
-                Order.created_at < cutoff_orders,
-            ).all()
-        )
+        Order.query.filter(
+            Order.status.in_(["pending_payment", "payment_error"]),
+            Order.created_at < cutoff_orders,
+        ).all()
+    )
     for o in stale_orders:
         o.status = "cancelled_auto"
 
     # Expire payments stuck waiting > 60 minutes
     cutoff_payments = now - timedelta(minutes=60)
     stale_payments = (
-            Payment.query.filter(
-                Payment.status == "waiting",
-                Payment.created_at < cutoff_payments,
-            ).all()
-        )
+        Payment.query.filter(
+            Payment.status == "waiting",
+            Payment.created_at < cutoff_payments,
+        ).all()
+    )
     for p in stale_payments:
         p.status = "expired"
 
@@ -364,52 +350,23 @@ def register_routes(app: Flask):
 
     # ----------------------- DASHBOARD / ORDERS -----------------------
 
-
-@app.route("/dashboard")
-@login_required
-def dashboard():
-    run_auto_cleanup()
-    from models import Order, WalletLog
-
-    recent_orders = (
-        Order.query.filter_by(user_id=current_user.id)
-        .order_by(Order.created_at.desc())
-        .limit(5)
-        .all()
-    )
-    balance = current_user.balance_usd or 0.0
-
-    total_orders = (
-        db.session.query(func.count(Order.id))
-        .filter(Order.user_id == current_user.id)
-        .scalar()
-        or 0
-    )
-    total_spent = (
-        db.session.query(func.coalesce(func.sum(Order.amount_usd), 0.0))
-        .filter(
-            Order.user_id == current_user.id,
-            Order.status.in_(["paid", "confirmed", "finished"]),
+    @app.route("/dashboard")
+    @login_required
+    def dashboard():
+        run_auto_cleanup()
+        recent_orders = (
+            Order.query.filter_by(user_id=current_user.id)
+            .order_by(Order.created_at.desc())
+            .limit(5)
+            .all()
         )
-        .scalar()
-        or 0.0
-    )
+        balance = current_user.balance_usd or 0.0
+        return render_template(
+            "dashboard.html",
+            orders=recent_orders,
+            balance=balance,
+        )
 
-    wallet_logs = (
-        WalletLog.query.filter_by(user_id=current_user.id)
-        .order_by(WalletLog.created_at.desc())
-        .limit(5)
-        .all()
-    )
-
-    return render_template(
-        "dashboard.html",
-        orders=recent_orders,
-        balance=balance,
-        total_orders=total_orders,
-        total_spent=total_spent,
-        wallet_logs=wallet_logs,
-    )
     @app.route("/orders")
     @login_required
     def orders():
@@ -428,200 +385,6 @@ def dashboard():
             flash("Unauthorized", "error")
             return redirect(url_for("orders"))
         return render_template("order_detail.html", order=order)
-
-@app.route("/orders/export")
-@login_required
-def orders_export():
-    from models import Order
-
-    orders = (
-        Order.query.filter_by(user_id=current_user.id)
-        .order_by(Order.created_at.desc())
-        .all()
-    )
-
-    import io as _io
-    import csv as _csv
-
-    buf = _io.StringIO()
-    writer = _csv.writer(buf)
-    writer.writerow(
-        [
-            "id",
-            "created_at",
-            "carrier",
-            "service",
-            "reference",
-            "weight_oz",
-            "amount_usd",
-            "status",
-        ]
-    )
-    for o in orders:
-        writer.writerow(
-            [
-                o.id,
-                o.created_at.isoformat() if getattr(o, "created_at", None) else "",
-                o.carrier,
-                o.service,
-                getattr(o, "reference", "") or "",
-                getattr(o, "weight_oz", 0.0),
-                getattr(o, "amount_usd", 0.0),
-                o.status,
-            ]
-        )
-
-    from flask import make_response
-
-    resp = make_response(buf.getvalue())
-    resp.headers["Content-Type"] = "text/csv"
-    resp.headers["Content-Disposition"] = "attachment; filename=orders.csv"
-    return resp
-
-@app.route("/analytics")
-@login_required
-def analytics():
-    from models import Order
-
-    orders = (
-        Order.query.filter_by(user_id=current_user.id)
-        .order_by(Order.created_at.desc())
-        .limit(200)
-        .all()
-    )
-
-    daily_counts = {}
-    daily_totals = {}
-    by_carrier = {}
-    by_service = {}
-
-    for o in orders:
-        if not getattr(o, "created_at", None):
-            continue
-        day = o.created_at.date().isoformat()
-        daily_counts[day] = daily_counts.get(day, 0) + 1
-        amt = float(getattr(o, "amount_usd", 0.0) or 0.0)
-        daily_totals[day] = daily_totals.get(day, 0.0) + amt
-        carrier = o.carrier or "Unknown"
-        by_carrier[carrier] = by_carrier.get(carrier, 0) + 1
-        service = o.service or "Unknown"
-        by_service[service] = by_service.get(service, 0) + 1
-
-    daily_labels = sorted(daily_counts.items())
-    daily_spent = sorted(daily_totals.items())
-
-    total_orders = sum(daily_counts.values())
-    total_spent = sum(daily_totals.values())
-
-    return render_template(
-        "analytics.html",
-        daily_labels=daily_labels,
-        daily_spent=daily_spent,
-        by_carrier=by_carrier,
-        by_service=by_service,
-        total_orders=total_orders,
-        total_spent=total_spent,
-    )
-
-@app.route("/bulk-labels", methods=["GET", "POST"])
-@login_required
-def bulk_labels():
-    from models import Order
-
-    if request.method == "POST":
-        file = request.files.get("file")
-        if not file or not file.filename:
-            flash("Please choose a CSV file to upload.", "error")
-            return redirect(url_for("bulk_labels"))
-
-        import io as _io
-        import csv as _csv
-
-        try:
-            content = file.read().decode("utf-8", errors="ignore")
-            reader = _csv.DictReader(content.splitlines())
-        except Exception:
-            flash("Could not read CSV file.", "error")
-            return redirect(url_for("bulk_labels"))
-
-        required_cols = [
-            "from_name",
-            "from_street1",
-            "from_city",
-            "from_state",
-            "from_zip",
-            "to_name",
-            "to_street1",
-            "to_city",
-            "to_state",
-            "to_zip",
-            "carrier",
-            "service",
-            "weight_oz",
-        ]
-        missing = [c for c in required_cols if c not in (reader.fieldnames or [])]
-        if missing:
-            flash(f"Missing required columns: {', '.join(missing)}", "error")
-            return redirect(url_for("bulk_labels"))
-
-        created = 0
-        for row in reader:
-            try:
-                weight_oz = float(row.get("weight_oz") or 0.0)
-                if weight_oz <= 0:
-                    continue
-
-                from_address = (
-                    f"{row.get('from_name','')}".strip()
-                    + "\n"
-                    + f"{row.get('from_street1','')}".strip()
-                    + "\n"
-                    + f"{row.get('from_city','')}, {row.get('from_state','')} {row.get('from_zip','')}"
-                    + "\nUnited States"
-                )
-                to_address = (
-                    f"{row.get('to_name','')}".strip()
-                    + "\n"
-                    + f"{row.get('to_street1','')}".strip()
-                    + "\n"
-                    + f"{row.get('to_city','')}, {row.get('to_state','')} {row.get('to_zip','')}"
-                    + "\nUnited States"
-                )
-                reference = (row.get("reference") or "").strip()
-                carrier = (row.get("carrier") or "").strip()
-                service = (row.get("service") or "").strip()
-
-                amount_usd = calculate_label_price(carrier, service, weight_oz)
-
-                order = Order(
-                    user_id=current_user.id,
-                    carrier=carrier,
-                    service=service,
-                    weight_oz=weight_oz,
-                    from_address=from_address,
-                    to_address=to_address,
-                    reference=reference,
-                    amount_usd=amount_usd,
-                    status="pending_payment",
-                )
-                db.session.add(order)
-                created += 1
-            except Exception:
-                continue
-
-        if created:
-            db.session.commit()
-            flash(
-                f"Created {created} bulk orders. You can pay them from the Orders page.",
-                "success",
-            )
-        else:
-            flash("No valid rows found in CSV.", "error")
-
-        return redirect(url_for("bulk_labels"))
-
-    return render_template("bulk_labels.html")
-
 
     @app.route("/orders/<int:order_id>/label")
     @login_required
@@ -665,36 +428,6 @@ def bulk_labels():
     @app.route("/wallet")
     @login_required
     def wallet():
-        # Check for NOWPayments redirect with NP_id and credit wallet if needed
-        np_id = request.args.get("NP_id") or request.args.get("np_id")
-        if np_id:
-            try:
-                data = get_nowpayments_payment(np_id)
-                payment_status = (data.get("payment_status") or "").lower()
-                order_id = data.get("order_id") or ""
-                if order_id.startswith("topup-"):
-                    raw_id = order_id.split("topup-", 1)[1]
-                    if raw_id.isdigit():
-                        payment = Payment.query.get(int(raw_id))
-                        success_statuses = {"finished", "confirmed", "paid", "completed"}
-                        if (
-                            payment
-                            and payment.type == "topup"
-                            and payment.status != "paid"
-                            and payment_status in success_statuses
-                        ):
-                            user = User.query.get(payment.user_id)
-                            if user:
-                                user.balance_usd = (user.balance_usd or 0.0) + payment.amount_usd
-                                log_wallet_change(
-                                    user,
-                                    payment.amount_usd,
-                                    "Wallet top-up via NOWPayments (return)",
-                                )
-                            payment.status = "paid"
-                            db.session.commit()
-            except Exception as e:
-                current_app.logger.warning(f"Error processing NOWPayments NP_id {np_id}: {e}")
         topups = (
             Payment.query.filter_by(user_id=current_user.id, type="topup")
             .order_by(Payment.created_at.desc())
@@ -744,7 +477,7 @@ def bulk_labels():
             try:
                 invoice = create_topup_invoice(payment)
             except Exception as e:
-                current_app.logger.error(f"Error creating NOWPayments topup invoice: {e}")
+                app.logger.error(f"Error creating NOWPayments topup invoice: {e}")
                 payment.status = "payment_error"
                 db.session.commit()
                 flash("Could not create crypto invoice, please try again later.", "error")
@@ -759,14 +492,12 @@ def bulk_labels():
 
         return render_template("wallet_topup.html", balance=current_user.balance_usd or 0.0)
 
-    # ----------------------- CREATE LABEL (wallet-first + options) -----------------------
+    # ----------------------- CREATE LABEL (wallet-first) -----------------------
 
     @app.route("/create-label", methods=["GET", "POST"])
     @login_required
     def create_label():
         if request.method == "POST":
-            payment_method = (request.form.get("payment_method") or "auto").lower()
-
             service = request.form.get("service") or "USPS First-Class"
 
             if service.startswith("USPS"):
@@ -830,79 +561,8 @@ def bulk_labels():
             db.session.add(order)
             db.session.commit()
 
+            # WALLET-FIRST LOGIC
             user_balance = current_user.balance_usd or 0.0
-
-            # If user chose wallet + has enough balance → use wallet only
-            if payment_method == "wallet":
-                if user_balance < amount_usd:
-                    flash(
-                        "Insufficient wallet balance for this label. Please top up or use crypto payment.",
-                        "error",
-                    )
-                    return redirect(url_for("create_label"))
-
-                current_user.balance_usd = user_balance - amount_usd
-                order.status = "paid"
-
-                wallet_payment = Payment(
-                    order_id=order.id,
-                    user_id=current_user.id,
-                    type="label",
-                    provider="wallet",
-                    provider_payment_id=None,
-                    amount_usd=amount_usd,
-                    currency="usd",
-                    status="paid",
-                )
-                db.session.add(wallet_payment)
-                log_wallet_change(current_user, -amount_usd, f"Label #{order.id} purchase")
-                db.session.commit()
-
-                try:
-                    send_email(
-                        subject="Your CryptoParcel label is paid",
-                        to_email=current_user.email,
-                        html_body=f"<p>Your label #{order.id} has been paid using your wallet balance.</p>",
-                        text_body=f"Your label #{order.id} has been paid using your wallet balance.",
-                    )
-                except Exception:
-                    pass
-
-                flash("Label paid using your wallet balance.", "success")
-                return redirect(url_for("order_detail", order_id=order.id))
-
-            # If user chose crypto explicitly → always go to NOWPayments
-            if payment_method == "crypto":
-                try:
-                    invoice = create_nowpayments_invoice(order)
-                except Exception as e:
-                    current_app.logger.error(f"Error creating NOWPayments invoice: {e}")
-                    order.status = "payment_error"
-                    db.session.commit()
-                    flash(
-                        "We could not create a crypto invoice. Please try again later.",
-                        "error",
-                    )
-                    return redirect(url_for("order_detail", order_id=order.id))
-
-                payment = Payment(
-                    order_id=order.id,
-                    user_id=current_user.id,
-                    type="label",
-                    provider="nowpayments",
-                    provider_payment_id=str(
-                        invoice.get("payment_id") or invoice.get("id") or ""
-                    ),
-                    amount_usd=amount_usd,
-                    currency="crypto",
-                    status="waiting",
-                )
-                db.session.add(payment)
-                db.session.commit()
-
-                return redirect(invoice.get("invoice_url"))
-
-            # Fallback / auto mode: wallet-first, then crypto
             if user_balance >= amount_usd:
                 current_user.balance_usd = user_balance - amount_usd
                 order.status = "paid"
@@ -921,6 +581,7 @@ def bulk_labels():
                 log_wallet_change(current_user, -amount_usd, f"Label #{order.id} purchase")
                 db.session.commit()
 
+                # Email notification
                 try:
                     send_email(
                         subject="Your CryptoParcel label is paid",
@@ -934,11 +595,11 @@ def bulk_labels():
                 flash("Label paid using your wallet balance.", "success")
                 return redirect(url_for("order_detail", order_id=order.id))
 
-            # Auto mode and not enough balance → crypto
+            # Crypto fallback via NOWPayments
             try:
                 invoice = create_nowpayments_invoice(order)
             except Exception as e:
-                current_app.logger.error(f"Error creating NOWPayments invoice: {e}")
+                app.logger.error(f"Error creating NOWPayments invoice: {e}")
                 order.status = "payment_error"
                 db.session.commit()
                 flash(
@@ -964,11 +625,7 @@ def bulk_labels():
 
             return redirect(invoice.get("invoice_url"))
 
-        # GET: show form with balance
-        return render_template(
-            "create_label.html",
-            balance=current_user.balance_usd or 0.0,
-        )
+        return render_template("create_label.html")
 
     # ----------------------- NOWPAYMENTS IPN -----------------------
 
@@ -979,24 +636,31 @@ def bulk_labels():
         signature = request.headers.get("x-nowpayments-sig", "")
 
         if not verify_nowpayments_signature(raw_body, signature):
-            current_app.logger.warning("NOWPayments IPN: invalid signature")
+            app.logger.warning("NOWPayments IPN: invalid signature")
             return "invalid signature", 400
 
         try:
             data = request.get_json(force=True, silent=False)
         except Exception as e:
-            current_app.logger.warning(f"NOWPayments IPN: invalid JSON: {e}")
+            app.logger.warning(f"NOWPayments IPN: invalid JSON: {e}")
             return "invalid json", 400
 
-        payment_id = str(data.get("payment_id") or data.get("invoice_id") or "")
+        payment_id = str(data.get("payment_id") or "")
+        invoice_id = str(data.get("invoice_id") or "")
         payment_status = (data.get("payment_status") or "").lower()
 
-        if not payment_id:
+        if not payment_id and not invoice_id:
             return "missing payment_id", 400
 
-        payment = Payment.query.filter_by(provider_payment_id=payment_id).first()
+        payment = None
+        if payment_id:
+            payment = Payment.query.filter_by(provider_payment_id=payment_id).first()
+        if not payment and invoice_id:
+            payment = Payment.query.filter_by(provider_payment_id=invoice_id).first()
+
+        lookup_key = payment_id or invoice_id
         if not payment:
-            current_app.logger.warning(f"NOWPayments IPN: payment not found: {payment_id}")
+            app.logger.warning(f"NOWPayments IPN: payment not found for id={lookup_key}")
             return "payment not found", 404
 
         success_statuses = {"finished", "confirmed", "paid", "completed"}
@@ -1079,9 +743,7 @@ def bulk_labels():
         total_users = User.query.count()
         total_orders = Order.query.count()
         total_payments = Payment.query.count()
-        total_wallet_balance = db.session.query(
-            db.func.coalesce(db.func.sum(User.balance_usd), 0.0)
-        ).scalar()
+        total_wallet_balance = db.session.query(db.func.coalesce(db.func.sum(User.balance_usd), 0.0)).scalar()
         recent_orders = Order.query.order_by(Order.created_at.desc()).limit(10).all()
         recent_payments = Payment.query.order_by(Payment.created_at.desc()).limit(10).all()
         return render_template(
@@ -1184,7 +846,7 @@ def bulk_labels():
 
     @app.errorhandler(500)
     def server_error(e):
-        current_app.logger.error(f"Server error: {e}")
+        app.logger.error(f"Server error: {e}")
         return render_template("errors/500.html"), 500
 
 
@@ -1192,35 +854,3 @@ app = create_app()
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 8000)), debug=True)
-
-@app.route("/api-keys", methods=["GET", "POST"])
-@login_required
-def api_keys():
-    from models import APIKey
-
-    if request.method == "POST":
-        action = request.form.get("action")
-        if action == "create":
-            name = (request.form.get("name") or "").strip() or "API key"
-            raw_key = secrets.token_hex(32)
-            api_key = APIKey(user_id=current_user.id, name=name, key=raw_key)
-            db.session.add(api_key)
-            db.session.commit()
-            flash("New API key created.", "success")
-            return redirect(url_for("api_keys"))
-        elif action == "toggle":
-            key_id = request.form.get("key_id", type=int)
-            if key_id:
-                api_key = APIKey.query.get(key_id)
-                if api_key and api_key.user_id == current_user.id:
-                    api_key.is_active = not api_key.is_active
-                    db.session.commit()
-                    flash("API key updated.", "success")
-            return redirect(url_for("api_keys"))
-
-    keys = (
-        APIKey.query.filter_by(user_id=current_user.id)
-        .order_by(APIKey.created_at.desc())
-        .all()
-    )
-    return render_template("api_keys.html", keys=keys)
