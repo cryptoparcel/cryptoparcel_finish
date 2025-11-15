@@ -73,8 +73,8 @@ class WalletLog(db.Model):
 
 
 class APIKey(db.Model):
-    # IMPORTANT: renamed from "api_key" to avoid Postgres type name collision
-    __tablename__ = "user_api_keys"
+    # Renamed again to avoid leftover Postgres sequence conflicts
+    __tablename__ = "cp_user_api_keys"
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
