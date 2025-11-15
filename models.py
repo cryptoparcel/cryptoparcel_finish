@@ -15,6 +15,9 @@ class User(UserMixin, db.Model):
     orders = db.relationship("Order", backref="user", lazy=True)
     payments = db.relationship("Payment", backref="user", lazy=True)
     wallet_logs = db.relationship("WalletLog", backref="user", lazy=True)
+    api_keys = db.relationship("APIKey", backref="user", lazy=True)
+    address_profiles = db.relationship("AddressProfile", backref="user", lazy=True)
+    team_memberships = db.relationship("TeamMembership", backref="user", lazy=True)
 
 
 class Order(db.Model):
@@ -70,7 +73,8 @@ class WalletLog(db.Model):
 
 
 class APIKey(db.Model):
-    __tablename__ = "api_key"
+    # IMPORTANT: renamed from "api_key" to avoid Postgres type name collision
+    __tablename__ = "user_api_keys"
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
@@ -80,4 +84,30 @@ class APIKey(db.Model):
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     last_used_at = db.Column(db.DateTime, nullable=True)
 
-    user = db.relationship("User", backref=db.backref("api_keys", lazy=True))
+
+class AddressProfile(db.Model):
+    __tablename__ = "address_profile"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False, index=True)
+    kind = db.Column(db.String(10), nullable=False)  # "from" or "to"
+    label = db.Column(db.String(120), nullable=False)
+
+    name = db.Column(db.String(255))
+    street1 = db.Column(db.String(255), nullable=False)
+    street2 = db.Column(db.String(255))
+    city = db.Column(db.String(255), nullable=False)
+    state = db.Column(db.String(64), nullable=False)
+    zip = db.Column(db.String(32), nullable=False)
+    country = db.Column(db.String(64), nullable=False, default="United States")
+
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+
+class TeamMembership(db.Model):
+    __tablename__ = "team_membership"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False, index=True)
+    role = db.Column(db.String(32), nullable=False, default="owner")  # "owner", "staff"
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
