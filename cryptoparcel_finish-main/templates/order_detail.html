@@ -1,0 +1,15 @@
+
+{% extends 'base.html' %}
+{% block title %}Order #{{ order.id }} — CryptoParcel{% endblock %}
+{% block content %}
+<h2>Order #{{ order.id }}</h2>
+<p>Status: {{ order.status }}</p>
+<p>Carrier: {{ order.carrier }}</p>
+<p>Service: {{ order.service }}</p>
+<p>Weight: {{ order.weight_oz }} oz</p>
+{% if order.status in ['paid','confirmed','finished'] %}
+  <a class="btn primary" href="{{ url_for('download_label', order_id=order.id) }}">Download Label</a>
+{% else %}
+  <p>Waiting for payment confirmation…</p>
+{% endif %}
+{% endblock %}

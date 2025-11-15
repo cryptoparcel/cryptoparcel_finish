@@ -67,35 +67,3 @@ class WalletLog(db.Model):
     amount_change = db.Column(db.Float, nullable=False)
     reason = db.Column(db.String(255), nullable=False)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-
-class AddressProfile(db.Model):
-    __tablename__ = "address_profile"
-
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False, index=True)
-    kind = db.Column(db.String(10), nullable=False)  # "from" or "to"
-    label = db.Column(db.String(120), nullable=False)
-
-    name = db.Column(db.String(255))
-    street1 = db.Column(db.String(255), nullable=False)
-    street2 = db.Column(db.String(255))
-    city = db.Column(db.String(255), nullable=False)
-    state = db.Column(db.String(64), nullable=False)
-    zip = db.Column(db.String(32), nullable=False)
-    country = db.Column(db.String(64), nullable=False, default="United States")
-
-    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-
-    user = db.relationship("User", backref=db.backref("address_profiles", lazy=True))
-
-
-class TeamMembership(db.Model):
-    __tablename__ = "team_membership"
-
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False, index=True)
-    role = db.Column(db.String(32), nullable=False, default="owner")  # "owner", "staff"
-    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-
-    user = db.relationship("User", backref=db.backref("team_memberships", lazy=True))
-

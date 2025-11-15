@@ -18,12 +18,8 @@
       {% if current_user.is_authenticated %}
         <a href="{{ url_for('dashboard') }}">Dashboard</a>
         <a href="{{ url_for('create_label') }}">Create Label</a>
-        <a href="{{ url_for('orders') }}">My Labels</a>
-        <a href="{{ url_for('addresses') }}">Address book</a>
-        {% if current_role == 'owner' %}
+        <a href="{{ url_for('orders') }}">Orders</a>
         <a href="{{ url_for('wallet') }}">Wallet</a>
-        <a href="{{ url_for('team') }}">Team</a>
-        {% endif %}
         <a href="{{ url_for('logout') }}">Logout</a>
       {% else %}
         <a href="{{ url_for('login') }}">Login</a>

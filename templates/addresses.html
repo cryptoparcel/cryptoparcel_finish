@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+{% block title %}Address Book — CryptoParcel{% endblock %}
+{% block content %}
+<section class="section">
+  <div class="page-header">
+    <div>
+      <h1>Address book</h1>
+      <p class="muted">
+        Save your most common <strong>From</strong> and <strong>To</strong> addresses so labels take seconds.
+      </p>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <!-- Senders -->
+    <div class="card">
+      <h2>Sender profiles</h2>
+      <p class="muted">Use these as your default “From” addresses.</p>
+
+      <form method="POST" class="form form-compact">
+        <input type="hidden" name="kind" value="from">
+        <div class="grid-2">
+          <div class="field">
+            <label>Label</label>
+            <input name="label" placeholder="Main warehouse, Home" required>
+          </div>
+          <div class="field">
+            <label>Name</label>
+            <input name="name" placeholder="Sender name">
+          </div>
+        </div>
+        <div class="field">
+          <label>Street</label>
+          <input name="street1" required>
+        </div>
+        <div class="field">
+          <label>Apt/Suite (optional)</label>
+          <input name="street2">
+        </div>
+        <div class="grid-3">
+          <div class="field">
+            <label>City</label>
+            <input name="city" required>
+          </div>
+          <div class="field">
+            <label>State</label>
+            <input name="state" maxlength="2" placeholder="CA" required>
+          </div>
+          <div class="field">
+            <label>ZIP</label>
+            <input name="zip" pattern="\d{5}(-\d{4})?" required>
+          </div>
+        </div>
+        <div class="field">
+          <label>Country</label>
+          <input name="country" value="United States">
+        </div>
+        <div class="actions">
+          <button class="btn primary" type="submit">Save sender profile</button>
+        </div>
+      </form>
+
+      <hr>
+      {% if from_profiles %}
+      <ul class="simple-list">
+        {% for p in from_profiles %}
+        <li class="simple-list-item">
+          <div>
+            <strong>{{ p.label }}</strong>
+            <div class="muted small">
+              {{ p.name or "" }}<br>
+              {{ p.street1 }}{% if p.street2 %}, {{ p.street2 }}{% endif %}<br>
+              {{ p.city }}, {{ p.state }} {{ p.zip }}
+            </div>
+          </div>
+          <form method="POST" class="inline-form">
+            <input type="hidden" name="action" value="delete">
+            <input type="hidden" name="profile_id" value="{{ p.id }}">
+            <button class="btn ghost btn-sm" type="submit">Delete</button>
+          </form>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p class="muted">No sender profiles yet.</p>
+      {% endif %}
+    </div>
+
+    <!-- Recipients -->
+    <div class="card">
+      <h2>Recipient profiles</h2>
+      <p class="muted">Common “To” addresses for customers, reshippers, or partners.</p>
+
+      <form method="POST" class="form form-compact">
+        <input type="hidden" name="kind" value="to">
+        <div class="grid-2">
+          <div class="field">
+            <label>Label</label>
+            <input name="label" placeholder="Main customer, Reshipper hub" required>
+          </div>
+          <div class="field">
+            <label>Name</label>
+            <input name="name" placeholder="Recipient name">
+          </div>
+        </div>
+        <div class="field">
+          <label>Street</label>
+          <input name="street1" required>
+        </div>
+        <div class="field">
+          <label>Apt/Suite (optional)</label>
+          <input name="street2">
+        </div>
+        <div class="grid-3">
+          <div class="field">
+            <label>City</label>
+            <input name="city" required>
+          </div>
+          <div class="field">
+            <label>State</label>
+            <input name="state" maxlength="2" placeholder="NY" required>
+          </div>
+          <div class="field">
+            <label>ZIP</label>
+            <input name="zip" pattern="\d{5}(-\d{4})?" required>
+          </div>
+        </div>
+        <div class="field">
+          <label>Country</label>
+          <input name="country" value="United States">
+        </div>
+        <div class="actions">
+          <button class="btn primary" type="submit">Save recipient profile</button>
+        </div>
+      </form>
+
+      <hr>
+      {% if to_profiles %}
+      <ul class="simple-list">
+        {% for p in to_profiles %}
+        <li class="simple-list-item">
+          <div>
+            <strong>{{ p.label }}</strong>
+            <div class="muted small">
+              {{ p.name or "" }}<br>
+              {{ p.street1 }}{% if p.street2 %}, {{ p.street2 }}{% endif %}<br>
+              {{ p.city }}, {{ p.state }} {{ p.zip }}
+            </div>
+          </div>
+          <form method="POST" class="inline-form">
+            <input type="hidden" name="action" value="delete">
+            <input type="hidden" name="profile_id" value="{{ p.id }}">
+            <button class="btn ghost btn-sm" type="submit">Delete</button>
+          </form>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p class="muted">No recipient profiles yet.</p>
+      {% endif %}
+    </div>
+  </div>
+</section>
+{% endblock %}
