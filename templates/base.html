@@ -51,6 +51,7 @@
                         <a href="{{ url_for('orders') }}">Orders</a>
                         <a href="{{ url_for('wallet') }}">Wallet</a>
                         <a href="{{ url_for('api_keys') }}">API keys</a>
+                        <a href="/settings">Settings</a>  <!-- placeholder settings link -->
                         <div class="cp-user-divider"></div>
                         <a href="{{ url_for('logout') }}">Sign out</a>
                     </div>
@@ -93,5 +94,35 @@
         </div>
     </footer>
 </div>
+
+<!-- Simple JS: try click-to-open for the account menu -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var menu = document.querySelector('.cp-user-menu');
+    if (!menu) return;
+
+    var trigger = menu.querySelector('.cp-user-trigger');
+    var dropdown = menu.querySelector('.cp-user-dropdown');
+
+    if (trigger) {
+        trigger.addEventListener('click', function (e) {
+            e.stopPropagation();
+            menu.classList.toggle('is-open');
+        });
+    }
+
+    // Close when clicking anywhere else
+    document.addEventListener('click', function () {
+        menu.classList.remove('is-open');
+    });
+
+    // Allow clicking inside dropdown without closing immediately
+    if (dropdown) {
+        dropdown.addEventListener('click', function (e) {
+            e.stopPropagation();
+        });
+    }
+});
+</script>
 </body>
 </html>

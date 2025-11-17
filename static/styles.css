@@ -858,9 +858,17 @@ textarea:focus {
     z-index: 40;
 }
 
+/* Show dropdown when menu has .is-open (click via JS) */
+.cp-user-menu.is-open .cp-user-dropdown {
+    display: block;
+}
+
+/* Also show on hover as a backup (so it still works even if JS fails) */
 .cp-user-menu:hover .cp-user-dropdown {
     display: block;
 }
+
+
 
 .cp-user-dropdown a {
     display: block;
