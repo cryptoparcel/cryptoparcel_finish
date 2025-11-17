@@ -8,7 +8,7 @@ if defined _OLD_CODEPAGE (
     "%SystemRoot%\System32\chcp.com" 65001 > nul
 )
 
-set VIRTUAL_ENV=C:\Users\7700k\OneDrive\Desktop\1shipping\cryptoparcel_finish-main\venv
+set VIRTUAL_ENV=C:\Users\7700k\OneDrive\Desktop\1shipping\cryptoparcel_finish\venv
 
 if not defined PROMPT set PROMPT=$P$G
 
