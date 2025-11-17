@@ -1,4 +1,3 @@
-
 /* ============================================================
    CryptoParcel UI — Clean White SaaS Theme
    Full revamp: no dark gradients, no black bars
@@ -144,16 +143,16 @@ ul, ol {
     border: 1px solid transparent;
     font-size: 0.9rem;
     font-weight: 500;
-    background: linear-gradient(135deg, var(--cp-accent), var(--cp-accent-strong));
+    background: var(--cp-accent);
     color: #f9fafb;
-    box-shadow: 0 12px 22px rgba(37, 99, 235, 0.3);
+    box-shadow: 0 6px 14px rgba(37, 99, 235, 0.22);
     cursor: pointer;
     transition: transform 0.08s ease-out, box-shadow 0.12s ease-out;
 }
 
 .cp-nav-primary:hover {
     transform: translateY(-1px);
-    box-shadow: 0 16px 30px rgba(37, 99, 235, 0.35);
+    box-shadow: 0 10px 20px rgba(37, 99, 235, 0.3);
 }
 
 .cp-nav-ghost {
@@ -497,20 +496,21 @@ textarea:focus {
     font-size: 0.8rem;
 }
 
+/* FLAT primary (no glare) */
 .primary,
 .cp-btn-primary,
 .btn.primary {
-    background: linear-gradient(135deg, var(--cp-accent), var(--cp-accent-strong));
+    background: var(--cp-accent);
     color: #f9fafb;
     border-color: transparent;
-    box-shadow: 0 12px 22px rgba(37, 99, 235, 0.30);
+    box-shadow: 0 6px 14px rgba(37, 99, 235, 0.22);
 }
 
 .primary:hover,
 .cp-btn-primary:hover,
 .btn.primary:hover {
     transform: translateY(-1px);
-    box-shadow: 0 16px 30px rgba(37, 99, 235, 0.35);
+    box-shadow: 0 10px 20px rgba(37, 99, 235, 0.3);
 }
 
 .secondary,
@@ -668,6 +668,11 @@ textarea:focus {
     color: var(--cp-text-main);
 }
 
+.page-header h3 {
+    font-size: 1.1rem;
+    color: var(--cp-text-main);
+}
+
 .page-meta {
     display: flex;
     gap: 12px;
@@ -779,4 +784,167 @@ textarea:focus {
     .grid-3 {
         grid-template-columns: minmax(0, 1fr);
     }
+}
+
+/* User menu (account dropdown in nav) */
+.cp-user-menu {
+    position: relative;
+}
+
+.cp-user-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: var(--cp-radius-pill);
+    border: 1px solid var(--cp-border-subtle);
+    background: var(--cp-surface-soft);
+    padding: 4px 10px 4px 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    color: var(--cp-text-main);
+}
+
+.cp-user-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 999px;
+    background: var(--cp-accent);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #f9fafb;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.cp-user-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.cp-user-label {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--cp-text-soft);
+}
+
+.cp-user-email {
+    font-size: 0.8rem;
+    max-width: 150px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.cp-user-caret {
+    font-size: 0.7rem;
+    color: var(--cp-text-soft);
+}
+
+/* Simple :hover dropdown */
+.cp-user-dropdown {
+    position: absolute;
+    right: 0;
+    margin-top: 6px;
+    min-width: 190px;
+    border-radius: 12px;
+    background: var(--cp-surface);
+    border: 1px solid var(--cp-border-subtle);
+    box-shadow: var(--cp-shadow-soft);
+    padding: 4px 0;
+    display: none;
+    z-index: 40;
+}
+
+.cp-user-menu:hover .cp-user-dropdown {
+    display: block;
+}
+
+.cp-user-dropdown a {
+    display: block;
+    padding: 6px 10px;
+    font-size: 0.85rem;
+    color: var(--cp-text-main);
+}
+
+.cp-user-dropdown a:hover {
+    background: var(--cp-surface-soft);
+}
+
+.cp-user-divider {
+    border-top: 1px solid var(--cp-border-subtle);
+    margin: 4px 0;
+}
+
+/* Wallet layout */
+.cp-wallet-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.7fr) minmax(0, 1.1fr);
+    gap: 18px;
+    align-items: flex-start;
+}
+
+@media (max-width: 900px) {
+    .cp-wallet-layout {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+.cp-wallet-balance-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 16px;
+    margin-bottom: 8px;
+}
+
+.cp-wallet-actions {
+    margin: 14px 0 18px;
+}
+
+/* Timeline styles */
+.cp-timeline {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.cp-timeline-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--cp-border-subtle);
+}
+
+.cp-timeline-item:last-child {
+    border-bottom: none;
+}
+
+.cp-timeline-title {
+    font-size: 0.9rem;
+    color: var(--cp-text-main);
+    margin-bottom: 2px;
+}
+
+.cp-timeline-meta {
+    font-size: 0.78rem;
+    color: var(--cp-text-soft);
+}
+
+.cp-timeline-amount {
+    font-size: 0.9rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.cp-amount-pos {
+    color: var(--cp-success);
+}
+
+.cp-amount-neg {
+    color: var(--cp-danger);
 }
