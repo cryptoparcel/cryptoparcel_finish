@@ -1167,6 +1167,8 @@ def register_routes(app: Flask):
         return render_template("errors/500.html"), 500
 
 
+# ------------ Routes defined on the created app (api keys + settings) ------------
+
 app = create_app()
 
 
@@ -1201,6 +1203,73 @@ def api_keys():
         .all()
     )
     return render_template("api_keys.html", keys=keys)
+
+
+@app.route("/settings", methods=["GET", "POST"])
+@login_required
+def settings():
+    """Basic account settings: change password, delete account."""
+    from models import User, Order, Payment, WalletLog, APIKey, AddressProfile, TeamMembership
+
+    if request.method == "POST":
+        action = request.form.get("action")
+
+        # --- Change password ---
+        if action == "change_password":
+            current_password = request.form.get("current_password") or ""
+            new_password = request.form.get("new_password") or ""
+            confirm_password = request.form.get("confirm_password") or ""
+
+            # Check current password
+            if not check_password_hash(current_user.password_hash, current_password):
+                flash("Current password is incorrect.", "error")
+                return redirect(url_for("settings"))
+
+            if len(new_password) < 8:
+                flash("New password must be at least 8 characters long.", "error")
+                return redirect(url_for("settings"))
+
+            if new_password != confirm_password:
+                flash("New password and confirmation do not match.", "error")
+                return redirect(url_for("settings"))
+
+            current_user.password_hash = generate_password_hash(new_password)
+            db.session.commit()
+            flash("Your password has been updated.", "success")
+            return redirect(url_for("settings"))
+
+        # --- Delete account ---
+        elif action == "delete_account":
+            confirm = (request.form.get("confirm") or "").strip().lower()
+
+            if confirm != "delete":
+                flash('To delete your account, type DELETE in the confirmation box.', "error")
+                return redirect(url_for("settings"))
+
+            user_id = current_user.id
+
+            # Log the user out first
+            logout_user()
+
+            # Delete associated objects
+            Payment.query.filter_by(user_id=user_id).delete()
+            Order.query.filter_by(user_id=user_id).delete()
+            WalletLog.query.filter_by(user_id=user_id).delete()
+            APIKey.query.filter_by(user_id=user_id).delete()
+            AddressProfile.query.filter_by(user_id=user_id).delete()
+            TeamMembership.query.filter_by(user_id=user_id).delete()
+
+            # Delete the user record
+            user = User.query.get(user_id)
+            if user:
+                db.session.delete(user)
+
+            db.session.commit()
+
+            flash("Your account and associated data have been deleted.", "info")
+            return redirect(url_for("index"))
+
+    return render_template("settings.html")
 
 
 if __name__ == "__main__":
