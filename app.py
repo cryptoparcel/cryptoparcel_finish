@@ -10,16 +10,12 @@ from flask import (
     session,
     current_app,
 )
-from flask_sqlalchemy import SQLAlchemy
 from flask_login import (
-    LoginManager,
     login_user,
     logout_user,
     login_required,
     current_user,
 )
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
 from sqlalchemy import func
 
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -39,14 +35,9 @@ from email.message import EmailMessage
 
 from config import Config
 from label_generator import generate_shipping_label_pdf
+from extensions import db, login_manager, limiter
 
 load_dotenv()
-
-db = SQLAlchemy()
-login_manager = LoginManager()
-login_manager.login_view = "login"
-
-limiter = Limiter(key_func=get_remote_address, default_limits=["200 per day", "50 per hour"])
 
 
 def calculate_label_price(carrier: str, service: str, weight_oz: float) -> float:
@@ -263,22 +254,22 @@ def run_auto_cleanup():
     # Cancel orders stuck in pending or payment_error > 15 minutes
     cutoff_orders = now - timedelta(minutes=15)
     stale_orders = (
-            Order.query.filter(
-                Order.status.in_(["pending_payment", "payment_error"]),
-                Order.created_at < cutoff_orders,
-            ).all()
-        )
+        Order.query.filter(
+            Order.status.in_(["pending_payment", "payment_error"]),
+            Order.created_at < cutoff_orders,
+        ).all()
+    )
     for o in stale_orders:
         o.status = "cancelled_auto"
 
     # Expire payments stuck waiting > 60 minutes
     cutoff_payments = now - timedelta(minutes=60)
     stale_payments = (
-            Payment.query.filter(
-                Payment.status == "waiting",
-                Payment.created_at < cutoff_payments,
-            ).all()
-        )
+        Payment.query.filter(
+            Payment.status == "waiting",
+            Payment.created_at < cutoff_payments,
+        ).all()
+    )
     for p in stale_payments:
         p.status = "expired"
 
@@ -625,9 +616,12 @@ def register_routes(app: Flask):
             return redirect(url_for("bulk_labels"))
 
         return render_template("bulk_labels.html")
+
     @app.route("/wallet")
     @login_required
     def wallet():
+        from models import User, Payment, WalletLog
+
         # Check for NOWPayments redirect with NP_id and credit wallet if needed
         np_id = request.args.get("NP_id") or request.args.get("np_id")
         if np_id:
@@ -681,6 +675,8 @@ def register_routes(app: Flask):
     @app.route("/wallet/topup", methods=["GET", "POST"])
     @login_required
     def wallet_topup():
+        from models import Payment
+
         if request.method == "POST":
             amount_str = request.form.get("amount_usd") or "0"
             try:
@@ -727,6 +723,8 @@ def register_routes(app: Flask):
     @app.route("/create-label", methods=["GET", "POST"])
     @login_required
     def create_label():
+        from models import Order, Payment, User
+
         if request.method == "POST":
             payment_method = (request.form.get("payment_method") or "auto").lower()
 
@@ -938,6 +936,8 @@ def register_routes(app: Flask):
     @app.route("/nowpayments/ipn", methods=["POST"])
     @limiter.limit("30 per minute")
     def nowpayments_ipn():
+        from models import User, Order, Payment
+
         raw_body = request.data or b""
         signature = request.headers.get("x-nowpayments-sig", "")
 
@@ -1038,6 +1038,8 @@ def register_routes(app: Flask):
     @app.route("/admin")
     @admin_required
     def admin_dashboard():
+        from models import User, Order, Payment
+
         run_auto_cleanup()
         total_users = User.query.count()
         total_orders = Order.query.count()
@@ -1060,6 +1062,8 @@ def register_routes(app: Flask):
     @app.route("/admin/orders")
     @admin_required
     def admin_orders():
+        from models import Order
+
         status = request.args.get("status")
         q = Order.query
         if status:
@@ -1070,6 +1074,8 @@ def register_routes(app: Flask):
     @app.route("/admin/orders/<int:order_id>/delete", methods=["POST"])
     @admin_required
     def admin_delete_order(order_id):
+        from models import Order, Payment
+
         order = Order.query.get_or_404(order_id)
         Payment.query.filter_by(order_id=order.id).delete()
         db.session.delete(order)
@@ -1080,6 +1086,8 @@ def register_routes(app: Flask):
     @app.route("/admin/orders/<int:order_id>/cancel", methods=["POST"])
     @admin_required
     def admin_cancel_order(order_id):
+        from models import Order
+
         order = Order.query.get_or_404(order_id)
         if order.status not in ("paid", "cancelled", "cancelled_auto"):
             order.status = "cancelled_admin"
@@ -1092,6 +1100,8 @@ def register_routes(app: Flask):
     @app.route("/admin/payments")
     @admin_required
     def admin_payments():
+        from models import Payment
+
         ptype = request.args.get("type")
         q = Payment.query
         if ptype:
@@ -1102,6 +1112,8 @@ def register_routes(app: Flask):
     @app.route("/admin/payments/<int:payment_id>/delete", methods=["POST"])
     @admin_required
     def admin_delete_payment(payment_id):
+        from models import Payment
+
         payment = Payment.query.get_or_404(payment_id)
         db.session.delete(payment)
         db.session.commit()
@@ -1111,12 +1123,16 @@ def register_routes(app: Flask):
     @app.route("/admin/users")
     @admin_required
     def admin_users():
+        from models import User
+
         users = User.query.order_by(User.created_at.desc()).limit(100).all()
         return render_template("admin/users.html", users=users)
 
     @app.route("/admin/users/<int:user_id>/adjust_balance", methods=["POST"])
     @admin_required
     def admin_adjust_balance(user_id):
+        from models import User
+
         user = User.query.get_or_404(user_id)
         delta_str = request.form.get("delta") or "0"
         reason = (request.form.get("reason") or "Manual adjustment by admin").strip()
@@ -1153,8 +1169,6 @@ def register_routes(app: Flask):
 
 app = create_app()
 
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.getenv("PORT", 8000)), debug=True)
 
 @app.route("/api-keys", methods=["GET", "POST"])
 @login_required
@@ -1187,3 +1201,7 @@ def api_keys():
         .all()
     )
     return render_template("api_keys.html", keys=keys)
+
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=int(os.getenv("PORT", 8000)), debug=True)

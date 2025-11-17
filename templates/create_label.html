@@ -1,139 +1,285 @@
 {% extends "base.html" %}
+{% block title %}Create Label - CryptoParcel{% endblock %}
 {% block content %}
 <section class="cp-inner">
     <div class="cp-inner-header">
         <h1>Create a shipping label</h1>
         <p>
-            Fill in your shipment details, choose a carrier, and pay in crypto.
-            Your label will be generated as a downloadable PDF.
+            Enter your shipment details, choose a carrier &amp; service, and pay with your wallet or crypto.
+            Your label will be generated as a downloadable PDF after payment.
         </p>
     </div>
 
     <div class="cp-inner-layout">
-        <form method="POST" action="/create-label" class="cp-form-card">
-            {% if csrf_token %}
+        <form method="POST" action="{{ url_for('create_label') }}" class="cp-form-card">
+            {% if csrf_token is defined %}
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             {% endif %}
 
+            <!-- FROM ADDRESS -->
             <h2>From address</h2>
             <div class="cp-field-grid">
                 <div class="cp-field-group">
-                    <label>Full name</label>
-                    <input type="text" name="from_name" required>
+                    <label for="from_name">Full name</label>
+                    <input type="text" id="from_name" name="from_name" required>
                 </div>
                 <div class="cp-field-group">
-                    <label>Phone</label>
-                    <input type="text" name="from_phone">
+                    <label for="from_phone">Phone (optional)</label>
+                    <input type="text" id="from_phone" name="from_phone">
                 </div>
             </div>
             <div class="cp-field-group">
-                <label>Street address</label>
-                <input type="text" name="from_address" required>
+                <label for="from_street1">Street address</label>
+                <input type="text" id="from_street1" name="from_street1" required placeholder="123 Main St">
             </div>
             <div class="cp-field-grid">
                 <div class="cp-field-group">
-                    <label>City</label>
-                    <input type="text" name="from_city" required>
+                    <label for="from_city">City</label>
+                    <input type="text" id="from_city" name="from_city" required>
                 </div>
                 <div class="cp-field-group">
-                    <label>State</label>
-                    <input type="text" name="from_state" required>
+                    <label for="from_state">State</label>
+                    <!-- type-ahead list of US states -->
+                    <input
+                        type="text"
+                        id="from_state"
+                        name="from_state"
+                        list="us-states"
+                        maxlength="2"
+                        required
+                        placeholder="CA"
+                    >
                 </div>
                 <div class="cp-field-group">
-                    <label>ZIP</label>
-                    <input type="text" name="from_zip" required>
+                    <label for="from_zip">ZIP</label>
+                    <input type="text" id="from_zip" name="from_zip" required placeholder="90001">
                 </div>
             </div>
 
+            <!-- TO ADDRESS -->
             <h2>To address</h2>
             <div class="cp-field-grid">
                 <div class="cp-field-group">
-                    <label>Full name</label>
-                    <input type="text" name="to_name" required>
+                    <label for="to_name">Full name</label>
+                    <input type="text" id="to_name" name="to_name" required>
                 </div>
                 <div class="cp-field-group">
-                    <label>Phone</label>
-                    <input type="text" name="to_phone">
+                    <label for="to_phone">Phone (optional)</label>
+                    <input type="text" id="to_phone" name="to_phone">
                 </div>
             </div>
             <div class="cp-field-group">
-                <label>Street address</label>
-                <input type="text" name="to_address" required>
+                <label for="to_street1">Street address</label>
+                <input type="text" id="to_street1" name="to_street1" required placeholder="456 Market St">
             </div>
             <div class="cp-field-grid">
                 <div class="cp-field-group">
-                    <label>City</label>
-                    <input type="text" name="to_city" required>
+                    <label for="to_city">City</label>
+                    <input type="text" id="to_city" name="to_city" required>
                 </div>
                 <div class="cp-field-group">
-                    <label>State</label>
-                    <input type="text" name="to_state" required>
+                    <label for="to_state">State</label>
+                    <!-- reuse same datalist -->
+                    <input
+                        type="text"
+                        id="to_state"
+                        name="to_state"
+                        list="us-states"
+                        maxlength="2"
+                        required
+                        placeholder="NY"
+                    >
                 </div>
                 <div class="cp-field-group">
-                    <label>ZIP</label>
-                    <input type="text" name="to_zip" required>
+                    <label for="to_zip">ZIP</label>
+                    <input type="text" id="to_zip" name="to_zip" required placeholder="10001">
                 </div>
             </div>
 
+            <!-- US STATES LIST -->
+            <datalist id="us-states">
+                <option value="AL">Alabama</option>
+                <option value="AK">Alaska</option>
+                <option value="AZ">Arizona</option>
+                <option value="AR">Arkansas</option>
+                <option value="CA">California</option>
+                <option value="CO">Colorado</option>
+                <option value="CT">Connecticut</option>
+                <option value="DE">Delaware</option>
+                <option value="FL">Florida</option>
+                <option value="GA">Georgia</option>
+                <option value="HI">Hawaii</option>
+                <option value="ID">Idaho</option>
+                <option value="IL">Illinois</option>
+                <option value="IN">Indiana</option>
+                <option value="IA">Iowa</option>
+                <option value="KS">Kansas</option>
+                <option value="KY">Kentucky</option>
+                <option value="LA">Louisiana</option>
+                <option value="ME">Maine</option>
+                <option value="MD">Maryland</option>
+                <option value="MA">Massachusetts</option>
+                <option value="MI">Michigan</option>
+                <option value="MN">Minnesota</option>
+                <option value="MS">Mississippi</option>
+                <option value="MO">Missouri</option>
+                <option value="MT">Montana</option>
+                <option value="NE">Nebraska</option>
+                <option value="NV">Nevada</option>
+                <option value="NH">New Hampshire</option>
+                <option value="NJ">New Jersey</option>
+                <option value="NM">New Mexico</option>
+                <option value="NY">New York</option>
+                <option value="NC">North Carolina</option>
+                <option value="ND">North Dakota</option>
+                <option value="OH">Ohio</option>
+                <option value="OK">Oklahoma</option>
+                <option value="OR">Oregon</option>
+                <option value="PA">Pennsylvania</option>
+                <option value="RI">Rhode Island</option>
+                <option value="SC">South Carolina</option>
+                <option value="SD">South Dakota</option>
+                <option value="TN">Tennessee</option>
+                <option value="TX">Texas</option>
+                <option value="UT">Utah</option>
+                <option value="VT">Vermont</option>
+                <option value="VA">Virginia</option>
+                <option value="WA">Washington</option>
+                <option value="WV">West Virginia</option>
+                <option value="WI">Wisconsin</option>
+                <option value="WY">Wyoming</option>
+            </datalist>
+
+            <!-- PACKAGE DETAILS -->
             <h2>Package details</h2>
             <div class="cp-field-grid">
                 <div class="cp-field-group">
-                    <label>Weight (lb)</label>
-                    <input type="number" step="0.01" name="weight_lb" required>
+                    <label for="weight_oz">Weight (oz)</label>
+                    <input
+                        type="number"
+                        step="0.1"
+                        min="0.1"
+                        id="weight_oz"
+                        name="weight_oz"
+                        required
+                        placeholder="16"
+                    >
+                    <small class="cp-text-muted">1 lb = 16 oz</small>
                 </div>
                 <div class="cp-field-group">
-                    <label>Length (in)</label>
-                    <input type="number" step="0.1" name="length_in">
+                    <label for="length_in">Length (in)</label>
+                    <input type="number" step="0.1" id="length_in" name="length_in">
                 </div>
                 <div class="cp-field-group">
-                    <label>Width (in)</label>
-                    <input type="number" step="0.1" name="width_in">
+                    <label for="width_in">Width (in)</label>
+                    <input type="number" step="0.1" id="width_in" name="width_in">
                 </div>
                 <div class="cp-field-group">
-                    <label>Height (in)</label>
-                    <input type="number" step="0.1" name="height_in">
+                    <label for="height_in">Height (in)</label>
+                    <input type="number" step="0.1" id="height_in" name="height_in">
                 </div>
             </div>
 
+            <!-- CARRIER & SERVICE -->
             <h2>Carrier &amp; service</h2>
-            <div class="cp-field-grid">
-                <div class="cp-field-group">
-                    <label>Carrier</label>
-                    <select name="carrier" required>
-                        <option value="usps">USPS</option>
-                        <option value="ups">UPS</option>
-                        <option value="fedex">FedEx</option>
-                    </select>
-                </div>
-                <div class="cp-field-group">
-                    <label>Service</label>
-                    <select name="service" required>
-                        <option value="priority">Priority / Ground</option>
-                        <option value="express">Express / Overnight</option>
-                        <option value="economy">Economy / Saver</option>
-                    </select>
-                </div>
+            <div class="cp-field-group">
+                <label for="service">Choose carrier &amp; speed</label>
+                <select id="service" name="service" required>
+                    <optgroup label="USPS">
+                        <option value="USPS First-Class Package">USPS First-Class Package</option>
+                        <option value="USPS Priority Mail">USPS Priority Mail</option>
+                        <option value="USPS Priority Mail Express">USPS Priority Mail Express</option>
+                        <option value="USPS Ground Advantage">USPS Ground Advantage</option>
+                        <option value="USPS Media Mail">USPS Media Mail</option>
+                    </optgroup>
+                    <optgroup label="UPS">
+                        <option value="UPS Ground">UPS Ground</option>
+                        <option value="UPS 3 Day Select">UPS 3 Day Select</option>
+                        <option value="UPS 2nd Day Air">UPS 2nd Day Air</option>
+                        <option value="UPS 2nd Day Air A.M.">UPS 2nd Day Air A.M.</option>
+                        <option value="UPS Next Day Air Saver">UPS Next Day Air Saver</option>
+                        <option value="UPS Next Day Air">UPS Next Day Air</option>
+                        <option value="UPS Next Day Air Early">UPS Next Day Air Early</option>
+                    </optgroup>
+                    <optgroup label="FedEx">
+                        <option value="FedEx Ground">FedEx Ground</option>
+                        <option value="FedEx Home Delivery">FedEx Home Delivery</option>
+                        <option value="FedEx Express Saver">FedEx Express Saver (3-Day)</option>
+                        <option value="FedEx 2Day">FedEx 2Day</option>
+                        <option value="FedEx 2Day A.M.">FedEx 2Day A.M.</option>
+                        <option value="FedEx Standard Overnight">FedEx Standard Overnight</option>
+                        <option value="FedEx Priority Overnight">FedEx Priority Overnight</option>
+                        <option value="FedEx First Overnight">FedEx First Overnight</option>
+                    </optgroup>
+                </select>
+                <small class="cp-text-muted">
+                    Options inspired by official USPS, UPS, and FedEx services.
+                </small>
+            </div>
+
+            <div class="cp-field-group">
+                <label for="reference">Reference (optional)</label>
+                <input
+                    type="text"
+                    id="reference"
+                    name="reference"
+                    placeholder="Order #1234, customer name, etc."
+                >
+            </div>
+
+            <!-- PAYMENT METHOD -->
+            <h2>Payment</h2>
+            <p class="cp-text-muted">
+                Wallet balance:
+                <strong>${{ '%.2f'|format(balance or 0.0) }}</strong>
+            </p>
+
+            <div class="cp-field-group cp-payment-options">
+                <label class="cp-radio-card">
+                    <input type="radio" name="payment_method" value="auto" checked>
+                    <div class="cp-radio-card-body">
+                        <strong>Smart auto</strong>
+                        <span>Use wallet first if balance is enough, otherwise send to crypto checkout.</span>
+                    </div>
+                </label>
+
+                <label class="cp-radio-card">
+                    <input type="radio" name="payment_method" value="wallet">
+                    <div class="cp-radio-card-body">
+                        <strong>Wallet only</strong>
+                        <span>Fail if wallet balance is not enough.</span>
+                    </div>
+                </label>
+
+                <label class="cp-radio-card">
+                    <input type="radio" name="payment_method" value="crypto">
+                    <div class="cp-radio-card-body">
+                        <strong>Crypto checkout</strong>
+                        <span>Always send to NOWPayments crypto invoice.</span>
+                    </div>
+                </label>
             </div>
 
             <button type="submit" class="cp-btn-primary cp-full-width">
-                Review price &amp; pay with crypto
+                Create label &amp; continue to payment
             </button>
         </form>
 
         <aside class="cp-side-card">
             <h3>Wallet &amp; payment</h3>
             <p>
-                You can either pay per-label or use your CryptoParcel wallet balance for faster checkout.
+                Pay per-label or load up your CryptoParcel wallet for faster, one-click checkout.
             </p>
             <ul class="cp-side-list">
                 <li>Instant crypto payment detection</li>
-                <li>Automatic label generation as PDF</li>
-                <li>Track your label history in your account</li>
+                <li>Automatic PDF label generation</li>
+                <li>Order &amp; label history in your account</li>
             </ul>
-            <a href="/wallet" class="cp-btn-secondary cp-full-width">
+            <a href="{{ url_for('wallet') }}" class="cp-btn-secondary cp-full-width">
                 Go to wallet
             </a>
         </aside>
     </div>
 </section>
 {% endblock %}
+
