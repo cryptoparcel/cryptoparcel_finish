@@ -718,7 +718,7 @@ def register_routes(app: Flask):
 
         return render_template("wallet_topup.html", balance=current_user.balance_usd or 0.0)
 
-    # ----------------------- CREATE LABEL (wallet-first + options) -----------------------
+        # ----------------------- CREATE LABEL (wallet-first + options) -----------------------
 
     @app.route("/create-label", methods=["GET", "POST"])
     @login_required
@@ -728,6 +728,7 @@ def register_routes(app: Flask):
         if request.method == "POST":
             payment_method = (request.form.get("payment_method") or "auto").lower()
 
+            # Service & carrier mapping: still simple for now
             service = request.form.get("service") or "USPS First-Class"
 
             if service.startswith("USPS"):
@@ -737,29 +738,52 @@ def register_routes(app: Flask):
             elif service.startswith("FedEx"):
                 carrier = "FedEx"
             else:
-                carrier = "Custom"
+                # fallback based on explicit carrier field if present
+                carrier_raw = (request.form.get("carrier") or "").strip().upper()
+                if carrier_raw in ("USPS", "UPS", "FEDEX"):
+                    carrier = carrier_raw
+                else:
+                    carrier = "Custom"
 
-            weight_str = request.form.get("weight_oz") or "0"
+            # ------------------- WEIGHT HANDLING -------------------
+            # Prefer weight_oz if provided; otherwise convert from weight_lb
+            weight_oz_str = request.form.get("weight_oz") or ""
+            weight_lb_str = request.form.get("weight_lb") or ""
+
             try:
-                weight_oz = float(weight_str)
+                if weight_oz_str:
+                    weight_oz = float(weight_oz_str)
+                elif weight_lb_str:
+                    weight_lb = float(weight_lb_str)
+                    weight_oz = weight_lb * 16.0
+                else:
+                    weight_oz = 0.0
             except ValueError:
                 flash("Invalid weight.", "error")
                 return redirect(url_for("create_label"))
 
             if weight_oz <= 0 or weight_oz > 10000:
-                flash("Weight must be between 0 and 10000 oz.", "error")
+                flash("Weight must be between 0 and 10,000 oz.", "error")
                 return redirect(url_for("create_label"))
 
-            # From address
+            # ------------------- FROM ADDRESS -------------------
             fa_name = (request.form.get("from_name") or "").strip()
-            fa_street1 = (request.form.get("from_street1") or "").strip()
+
+            # Support both from_street1 and from_address (your template uses from_address)
+            fa_street1 = (
+                (request.form.get("from_street1") or "").strip()
+                or (request.form.get("from_address") or "").strip()
+            )
             fa_city = (request.form.get("from_city") or "").strip()
             fa_state = (request.form.get("from_state") or "").strip()
             fa_zip = (request.form.get("from_zip") or "").strip()
 
-            # To address
+            # ------------------- TO ADDRESS -------------------
             ta_name = (request.form.get("to_name") or "").strip()
-            ta_street1 = (request.form.get("to_street1") or "").strip()
+            ta_street1 = (
+                (request.form.get("to_street1") or "").strip()
+                or (request.form.get("to_address") or "").strip()
+            )
             ta_city = (request.form.get("to_city") or "").strip()
             ta_state = (request.form.get("to_state") or "").strip()
             ta_zip = (request.form.get("to_zip") or "").strip()
@@ -767,6 +791,7 @@ def register_routes(app: Flask):
             if not all([fa_name, fa_street1, fa_city, fa_state, fa_zip]):
                 flash("From address is incomplete.", "error")
                 return redirect(url_for("create_label"))
+
             if not all([ta_name, ta_street1, ta_city, ta_state, ta_zip]):
                 flash("To address is incomplete.", "error")
                 return redirect(url_for("create_label"))
@@ -793,7 +818,7 @@ def register_routes(app: Flask):
 
             user_balance = current_user.balance_usd or 0.0
 
-            # If user chose wallet + has enough balance → use wallet only
+            # --------------- WALLET-ONLY MODE ----------------
             if payment_method == "wallet":
                 if user_balance < amount_usd:
                     flash(
@@ -832,7 +857,7 @@ def register_routes(app: Flask):
                 flash("Label paid using your wallet balance.", "success")
                 return redirect(url_for("order_detail", order_id=order.id))
 
-            # If user chose crypto explicitly → always go to NOWPayments
+            # --------------- CRYPTO-ONLY MODE ----------------
             if payment_method == "crypto":
                 try:
                     invoice = create_nowpayments_invoice(order)
@@ -863,7 +888,7 @@ def register_routes(app: Flask):
 
                 return redirect(invoice.get("invoice_url"))
 
-            # Fallback / auto mode: wallet-first, then crypto
+            # --------------- AUTO MODE (wallet first, then crypto) ----------------
             if user_balance >= amount_usd:
                 current_user.balance_usd = user_balance - amount_usd
                 order.status = "paid"
@@ -930,6 +955,7 @@ def register_routes(app: Flask):
             "create_label.html",
             balance=current_user.balance_usd or 0.0,
         )
+
 
     # ----------------------- NOWPAYMENTS IPN -----------------------
 
