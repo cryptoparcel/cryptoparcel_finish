@@ -33,8 +33,10 @@
                     Create label
                 </a>
 
+                <!-- Pure CSS user dropdown using a hidden checkbox -->
                 <div class="cp-user-menu">
-                    <button type="button" class="cp-user-trigger">
+                    <input type="checkbox" id="cp-user-toggle" class="cp-user-toggle">
+                    <label for="cp-user-toggle" class="cp-user-trigger">
                         <div class="cp-user-avatar">
                             {{ (current_user.email or 'U')[:1] | upper }}
                         </div>
@@ -45,13 +47,13 @@
                             </span>
                         </div>
                         <span class="cp-user-caret">▾</span>
-                    </button>
+                    </label>
                     <div class="cp-user-dropdown">
                         <a href="{{ url_for('dashboard') }}">Dashboard</a>
                         <a href="{{ url_for('orders') }}">Orders</a>
                         <a href="{{ url_for('wallet') }}">Wallet</a>
                         <a href="{{ url_for('api_keys') }}">API keys</a>
-                        <a href="/settings">Settings</a>  <!-- placeholder settings link -->
+                        <a href="/settings">Settings</a> <!-- settings placeholder -->
                         <div class="cp-user-divider"></div>
                         <a href="{{ url_for('logout') }}">Sign out</a>
                     </div>
@@ -94,35 +96,5 @@
         </div>
     </footer>
 </div>
-
-<!-- Simple JS: try click-to-open for the account menu -->
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    var menu = document.querySelector('.cp-user-menu');
-    if (!menu) return;
-
-    var trigger = menu.querySelector('.cp-user-trigger');
-    var dropdown = menu.querySelector('.cp-user-dropdown');
-
-    if (trigger) {
-        trigger.addEventListener('click', function (e) {
-            e.stopPropagation();
-            menu.classList.toggle('is-open');
-        });
-    }
-
-    // Close when clicking anywhere else
-    document.addEventListener('click', function () {
-        menu.classList.remove('is-open');
-    });
-
-    // Allow clicking inside dropdown without closing immediately
-    if (dropdown) {
-        dropdown.addEventListener('click', function (e) {
-            e.stopPropagation();
-        });
-    }
-});
-</script>
 </body>
 </html>

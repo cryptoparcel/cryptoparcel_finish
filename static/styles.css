@@ -791,6 +791,11 @@ textarea:focus {
     position: relative;
 }
 
+/* Hidden checkbox that controls the menu state */
+.cp-user-toggle {
+    display: none;
+}
+
 .cp-user-trigger {
     display: inline-flex;
     align-items: center;
@@ -843,7 +848,6 @@ textarea:focus {
     color: var(--cp-text-soft);
 }
 
-/* Simple :hover dropdown */
 .cp-user-dropdown {
     position: absolute;
     right: 0;
@@ -858,17 +862,10 @@ textarea:focus {
     z-index: 40;
 }
 
-/* Show dropdown when menu has .is-open (click via JS) */
-.cp-user-menu.is-open .cp-user-dropdown {
+/* Show dropdown when checkbox is checked (click-to-open, no JS needed) */
+.cp-user-menu .cp-user-toggle:checked + .cp-user-trigger + .cp-user-dropdown {
     display: block;
 }
-
-/* Also show on hover as a backup (so it still works even if JS fails) */
-.cp-user-menu:hover .cp-user-dropdown {
-    display: block;
-}
-
-
 
 .cp-user-dropdown a {
     display: block;
