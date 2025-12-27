@@ -25,7 +25,6 @@
         </nav>
         <div class="cp-nav-right">
             {% if current_user.is_authenticated %}
-                <span class="avatar">{{ current_user.email[0]|upper }}</span>
                 <a href="{{ url_for('logout') }}" class="btn secondary">Logout</a>
             {% else %}
                 <a href="{{ url_for('login') }}" class="btn secondary">Login</a>
