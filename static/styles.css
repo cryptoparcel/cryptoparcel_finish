@@ -1097,3 +1097,37 @@ textarea:focus {
         font-size: 1.6rem;
     }
 }
+/* Fix nav alignment - no breaking text */
+.cp-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
+    padding: 20px 40px;
+}
+
+.cp-nav-left {
+    display: flex;
+    align-items: center;
+    gap: 60px;
+}
+
+.cp-nav-links a {
+    white-space: nowrap;
+    padding: 10px 16px;
+}
+
+/* Logo blue */
+.cp-logo-large {
+    color: var(--cp-accent); /* Blue */
+    font-size: 2rem;
+    font-weight: 800;
+}
+
+/* Avatar & logout spacing */
+.cp-nav-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
