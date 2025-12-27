@@ -9,26 +9,27 @@
 <body>
 <div class="cp-page">
     <header class="cp-nav">
-        <div class="container nav-container">
-            <a href="{{ url_for('index') }}" class="cp-logo">CryptoParcel</a>
-            <nav class="cp-nav-links">
-                <a href="{{ url_for('index') }}">Home</a>
-                {% if current_user.is_authenticated %}
-                    <a href="{{ url_for('dashboard') }}">Dashboard</a>
-                    <a href="{{ url_for('orders') }}">Orders</a>
-                    <a href="{{ url_for('wallet') }}">Wallet</a>
-                    <a href="{{ url_for('create_label') }}">Create Label</a>
-                {% endif %}
-            </nav>
-            <div class="cp-nav-right">
-                {% if current_user.is_authenticated %}
-                    <span class="avatar">{{ current_user.email[0]|upper }}</span>
-                    <a href="{{ url_for('logout') }}" class="btn secondary">Logout</a>
-                {% else %}
-                    <a href="{{ url_for('login') }}" class="btn secondary">Login</a>
-                    <a href="{{ url_for('register') }}" class="btn primary">Sign Up</a>
-                {% endif %}
-            </div>
+        <div class="cp-nav-left">
+            <a href="{{ url_for('index') }}" class="cp-logo-large">CryptoParcel</a>
+        </div>
+        <nav class="cp-nav-links">
+            <a href="{{ url_for('index') }}">Home</a>
+            {% if current_user.is_authenticated %}
+                <a href="{{ url_for('dashboard') }}">Dashboard</a>
+                <a href="{{ url_for('orders') }}">Orders</a>
+                <a href="{{ url_for('wallet') }}">Wallet</a>
+                <a href="{{ url_for('create_label') }}">Create Label</a>
+                <a href="{{ url_for('settings') }}">Settings</a>
+            {% endif %}
+        </nav>
+        <div class="cp-nav-right">
+            {% if current_user.is_authenticated %}
+                <span class="avatar">{{ current_user.email[0]|upper }}</span>
+                <a href="{{ url_for('logout') }}" class="btn secondary">Logout</a>
+            {% else %}
+                <a href="{{ url_for('login') }}" class="btn secondary">Login</a>
+                <a href="{{ url_for('register') }}" class="btn primary">Sign Up</a>
+            {% endif %}
         </div>
     </header>
 
@@ -49,7 +50,6 @@
     <footer class="cp-footer">
         <div class="container">
             © 2025 CryptoParcel
-            <!-- Removed broken links: Terms and Privacy (add routes/templates later if needed) -->
         </div>
     </footer>
 </div>
