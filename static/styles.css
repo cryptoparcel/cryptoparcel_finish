@@ -1212,3 +1212,52 @@ textarea:focus {
 .support-clean .field {
     margin-bottom: 24px;
 }
+/* Center nav links perfectly in middle */
+.cp-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px 40px;
+}
+
+.cp-nav-center {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 40px;
+}
+
+.cp-nav-center a {
+    padding: 10px 16px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+/* Logo nicer — all caps already in HTML, add spacing and style */
+.cp-logo-large {
+    font-size: 2.2rem;
+    font-weight: 900;
+    letter-spacing: 0.15em; /* Nice spacing between letters */
+    color: var(--cp-accent); /* Blue */
+    text-transform: uppercase;
+}
+
+/* Right side spacing */
+.cp-nav-right {
+    gap: 20px;
+}
+
+/* Mobile: stack nav */
+@media (max-width: 900px) {
+    .cp-nav-center {
+        position: static;
+        transform: none;
+        margin-top: 16px;
+        width: 100%;
+        justify-content: center;
+    }
+    .cp-nav {
+        flex-direction: column;
+    }
+}
