@@ -956,3 +956,144 @@ textarea:focus {
         gap: 12px;
     }
 }
+/* Final polish fixes */
+
+/* Logo top left large */
+.cp-logo-large {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--cp-text-main);
+}
+
+/* Nav fixes */
+.cp-nav {
+    padding: 24px 40px;
+    gap: 40px;
+}
+
+.cp-nav-left {
+    gap: 60px;
+}
+
+/* Hero/homepage */
+.hero-clean {
+    padding: 100px 20px 80px;
+}
+
+.hero-clean h1 {
+    font-size: 3.8rem;
+}
+
+.hero-subtitle {
+    font-size: 1.5rem;
+    color: #374151;
+}
+
+/* Dashboard & wallet spacious */
+.dashboard-spacious, .wallet-spacious {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 120px 20px;
+    text-align: center;
+}
+
+.balance-section {
+    margin-bottom: 80px;
+}
+
+.balance-label {
+    font-size: 1.1rem;
+    color: var(--cp-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+.balance-amount {
+    font-size: 5rem;
+    font-weight: 700;
+}
+
+.centered {
+    display: block;
+    margin: 80px auto;
+    max-width: 500px;
+    padding: 24px;
+    font-size: 1.4rem;
+}
+
+.wallet-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    max-width: 700px;
+    margin: 80px auto;
+}
+
+.cp-btn-block {
+    width: 100%;
+    padding: 20px;
+}
+
+.recent-section {
+    margin-top: 80px;
+    text-align: left;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.recent-list, .activity-list {
+    margin-top: 40px;
+}
+
+.recent-item, .activity-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px 0;
+    border-bottom: 1px solid var(--cp-border-subtle);
+}
+
+.positive {
+    color: var(--cp-success);
+    font-weight: 600;
+}
+
+.negative {
+    color: var(--cp-danger);
+    font-weight: 600;
+}
+
+.spacious {
+    margin: 80px 0;
+}
+
+/* Carriers */
+.carriers p {
+    color: #4b5563;
+    font-weight: 500;
+}
+
+.carrier-list {
+    gap: 100px;
+    font-size: 2.2rem;
+    color: #4b5563;
+    font-weight: 700;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    .wallet-buttons {
+        grid-template-columns: 1fr;
+    }
+    .balance-amount {
+        font-size: 3.5rem;
+    }
+    .hero-clean h1 {
+        font-size: 2.8rem;
+    }
+    .carrier-list {
+        gap: 40px;
+        font-size: 1.6rem;
+    }
+}
