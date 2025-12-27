@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% block title %}Team & Roles — CryptoParcel{% endblock %}
+{% block content %}
+<section class="section">
+  <div class="page-header">
+    <div>
+      <h1>Team &amp; roles</h1>
+      <p class="muted">
+        Give your crew access to create labels while keeping wallet, API keys, and pricing owner-only.
+      </p>
+    </div>
+  </div>
+
+  <div class="card">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>User</th>
+          <th>Created</th>
+          <th>Role</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in users %}
+        <tr>
+          <td><strong>{{ u.email }}</strong></td>
+          <td>
+            {% if u.created_at %}
+              {{ u.created_at.strftime('%Y-%m-%d') }}
+            {% else %}
+              —
+            {% endif %}
+          </td>
+          <td>{{ roles[u.id] | capitalize }}</td>
+          <td>
+            <form method="POST" class="inline-form">
+              <input type="hidden" name="user_id" value="{{ u.id }}">
+              <select name="role" class="input-sm">
+                <option value="owner" {% if roles[u.id] == 'owner' %}selected{% endif %}>Owner</option>
+                <option value="staff" {% if roles[u.id] == 'staff' %}selected{% endif %}>Staff</option>
+              </select>
+              <button type="submit" class="btn ghost btn-sm">Update</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <p class="muted small">
+      <strong>Owner</strong>: full access (wallet, top-ups, pricing, admin).<br>
+      <strong>Staff</strong>: can log in, create labels, and see orders; wallet and top-ups are hidden.
+    </p>
+  </div>
+</section>
+{% endblock %}

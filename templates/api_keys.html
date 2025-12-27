@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% block title %}API keys — CryptoParcel{% endblock %}
+{% block content %}
+<section class="section">
+  <div class="page-header">
+    <div>
+      <h1>API keys</h1>
+      <p class="muted">Generate keys so you or your systems can talk to CryptoParcel programmatically in the future.</p>
+    </div>
+  </div>
+
+  <div class="card form">
+    <form method="post">
+      <input type="hidden" name="action" value="create">
+      <label for="name">Key label</label>
+      <input id="name" name="name" placeholder="e.g. Warehouse integration, Local script">
+      <button type="submit" class="btn primary">Create API key</button>
+      <p class="help">Keys are long random strings. You can deactivate them at any time.</p>
+    </form>
+  </div>
+</section>
+
+<section class="section">
+  <h2>Your keys</h2>
+  {% if keys %}
+    <div class="grid">
+      {% for key in keys %}
+        <div class="card">
+          <p class="muted">Label</p>
+          <p>{{ key.name }}</p>
+          <p class="muted">Key</p>
+          <p class="code">{{ key.key }}</p>
+          <p class="muted">
+            Created {{ key.created_at.strftime('%Y-%m-%d') }}
+            {% if key.last_used_at %}
+              · Last used {{ key.last_used_at.strftime('%Y-%m-%d %H:%M') }}
+            {% endif %}
+          </p>
+          <form method="post" class="inline-form">
+            <input type="hidden" name="action" value="toggle">
+            <input type="hidden" name="key_id" value="{{ key.id }}">
+            {% if key.is_active %}
+              <button class="btn small" type="submit">Deactivate</button>
+              <span class="status-badge status-badge-confirmed">Active</span>
+            {% else %}
+              <button class="btn small" type="submit">Activate</button>
+              <span class="status-badge status-badge-cancelled">Inactive</span>
+            {% endif %}
+          </form>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="muted">No API keys yet. Create one above to get started.</p>
+  {% endif %}
+</section>
+{% endblock %}

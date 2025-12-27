@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="cp-hero">
+    <div class="cp-hero-text">
+        <h1>Buy USPS, UPS &amp; FedEx labels with crypto in minutes.</h1>
+        <p>
+            CryptoParcel lets you purchase discounted shipping labels using BTC, ETH and more.
+            No accounts with carriers, no paperwork — just enter your address, pay in crypto, print.
+        </p>
+        <div class="cp-hero-actions">
+            <a href="/create-label" class="cp-btn-primary">Create a shipping label</a>
+            <a href="/wallet" class="cp-btn-secondary">Top up wallet</a>
+        </div>
+        <div class="cp-hero-badges">
+            <span>⚡ ~2 minute label creation</span>
+            <span>📍 USA domestic &amp; international</span>
+            <span>🪙 Pay with BTC, ETH &amp; more</span>
+        </div>
+    </div>
+
+    <div class="cp-hero-card">
+        <div class="cp-hero-card-header">
+            <span class="cp-pill">Live preview</span>
+            <h2>Quick label quote</h2>
+            <p>See an example of how easy it is.</p>
+        </div>
+        <form class="cp-hero-form">
+            <div class="cp-field-group">
+                <label>From ZIP</label>
+                <input type="text" placeholder="90001">
+            </div>
+            <div class="cp-field-group">
+                <label>To ZIP</label>
+                <input type="text" placeholder="10001">
+            </div>
+            <div class="cp-field-row">
+                <div class="cp-field-group">
+                    <label>Weight</label>
+                    <input type="text" placeholder="2 lb">
+                </div>
+                <div class="cp-field-group">
+                    <label>Service</label>
+                    <select>
+                        <option>USPS Priority Mail</option>
+                        <option>USPS First-Class</option>
+                        <option>UPS Ground</option>
+                        <option>UPS 2nd Day Air</option>
+                        <option>FedEx Ground</option>
+                        <option>FedEx 2Day</option>
+                    </select>
+                </div>
+            </div>
+            <button type="button" class="cp-btn-primary cp-full-width">
+                Continue to crypto checkout
+            </button>
+            <div class="cp-hero-crypto-row">
+                <span>Pay with:</span>
+                <div class="cp-crypto-chips">
+                    <span>BTC</span>
+                    <span>ETH</span>
+                    <span>USDT</span>
+                    <span>USDC</span>
+                </div>
+            </div>
+        </form>
+    </div>
+</section>
+
+<section class="cp-carriers">
+    <h2>All the major carriers. One crypto checkout.</h2>
+    <p class="cp-section-subtitle">
+        Mix and match services from USPS, UPS and FedEx — pick whatever is cheapest or fastest.
+    </p>
+    <div class="cp-carrier-grid">
+        <div class="cp-carrier-card">
+            <div class="cp-carrier-header">
+                <span class="cp-carrier-badge usps">USPS</span>
+                <h3>USPS</h3>
+            </div>
+            <ul>
+                <li>First-Class Mail</li>
+                <li>Priority Mail</li>
+                <li>Priority Mail Express</li>
+                <li>Media Mail</li>
+            </ul>
+        </div>
+        <div class="cp-carrier-card">
+            <div class="cp-carrier-header">
+                <span class="cp-carrier-badge ups">UPS</span>
+                <h3>UPS</h3>
+            </div>
+            <ul>
+                <li>UPS Ground</li>
+                <li>3 Day Select</li>
+                <li>2nd Day Air</li>
+                <li>Next Day Air</li>
+            </ul>
+        </div>
+        <div class="cp-carrier-card">
+            <div class="cp-carrier-header">
+                <span class="cp-carrier-badge fedex">FedEx</span>
+                <h3>FedEx</h3>
+            </div>
+            <ul>
+                <li>FedEx Ground</li>
+                <li>FedEx Home Delivery</li>
+                <li>FedEx Express Saver</li>
+                <li>FedEx 2Day &amp; Overnight</li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+<section class="cp-steps">
+    <h2>How CryptoParcel works</h2>
+    <div class="cp-steps-grid">
+        <div class="cp-step">
+            <span class="cp-step-number">1</span>
+            <h3>Enter shipment details</h3>
+            <p>From/to addresses, package size, weight, and preferred carrier/service.</p>
+        </div>
+        <div class="cp-step">
+            <span class="cp-step-number">2</span>
+            <h3>Pay securely with crypto</h3>
+            <p>We generate a one-time payment link. Your funds are instantly confirmed.</p>
+        </div>
+        <div class="cp-step">
+            <span class="cp-step-number">3</span>
+            <h3>Download &amp; print label</h3>
+            <p>Get a PDF label to print or drop into any shipping software.</p>
+        </div>
+    </div>
+</section>
+{% endblock %}

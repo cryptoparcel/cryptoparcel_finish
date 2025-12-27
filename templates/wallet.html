@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% block title %}Wallet - CryptoParcel{% endblock %}
+{% block content %}
+<section class="section">
+
+    <div class="page-header">
+        <div>
+            <h1>Wallet</h1>
+            <p class="muted">
+                Load your CryptoParcel wallet with crypto and use it for fast, low-friction label checkout.
+            </p>
+        </div>
+    </div>
+
+    <div class="cp-wallet-layout">
+        <!-- LEFT: Balance + actions + top-up history -->
+        <div class="cp-wallet-main">
+            <div class="card cp-wallet-balance-card">
+                <div>
+                    <span class="balance-label">Wallet balance</span>
+                    <div class="balance-amount">
+                        ${{ '%.2f'|format(balance or 0.0) }}
+                    </div>
+                    <p class="muted" style="margin-top: 6px;">
+                        Your wallet balance is used first when you create a label. If it's not enough,
+                        you can pay the rest via crypto invoice.
+                    </p>
+                </div>
+            </div>
+
+            <div class="cp-wallet-actions grid-2">
+                <div class="card">
+                    <div class="balance-label">Add funds</div>
+                    <h3 style="margin-bottom: 4px;">Top up balance</h3>
+                    <p class="muted" style="margin-bottom: 10px;">
+                        Create a secure crypto invoice via NOWPayments and credit your wallet in USD.
+                    </p>
+                    <a href="{{ url_for('wallet_topup') }}" class="primary btn-sm">
+                        Top up with crypto
+                    </a>
+                </div>
+
+                <div class="card">
+                    <div class="balance-label">Spend balance</div>
+                    <h3 style="margin-bottom: 4px;">Create a label</h3>
+                    <p class="muted" style="margin-bottom: 10px;">
+                        Use your wallet balance first for instant checkout, or pay fully via crypto.
+                    </p>
+                    <a href="{{ url_for('create_label') }}" class="btn-sm secondary">
+                        Go to create label
+                    </a>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="page-header" style="margin-bottom: 10px;">
+                    <div>
+                        <h2>Top-up history</h2>
+                        <p class="muted">
+                            Recent wallet funding via crypto. Successful top-ups increase your USD balance.
+                        </p>
+                    </div>
+                </div>
+                {% if topups %}
+                    <table class="table">
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Amount (USD)</th>
+                            <th>Status</th>
+                            <th>Provider</th>
+                            <th>Created</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for t in topups %}
+                            <tr>
+                                <td>#{{ t.id }}</td>
+                                <td>${{ '%.2f'|format(t.amount_usd or 0.0) }}</td>
+                                <td>{{ t.status|capitalize }}</td>
+                                <td>{{ t.provider or '—' }}</td>
+                                <td>{{ t.created_at.strftime("%Y-%m-%d %H:%M") if t.created_at else "—" }}</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p class="muted">
+                        No top-ups yet. Use <strong>Top up balance</strong> above to add funds with crypto.
+                    </p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- RIGHT: Wallet activity / logs -->
+        <aside class="cp-wallet-side">
+            <div class="card">
+                <div class="page-header" style="margin-bottom: 8px;">
+                    <div>
+                        <h2>Wallet activity</h2>
+                        <p class="muted">
+                            Every debit and credit to your wallet balance is logged here.
+                        </p>
+                    </div>
+                </div>
+
+                {% if logs %}
+                    <ul class="cp-timeline">
+                        {% for log in logs %}
+                            <li class="cp-timeline-item">
+                                <div>
+                                    <div class="cp-timeline-title">{{ log.reason }}</div>
+                                    <div class="cp-timeline-meta">
+                                        {{ log.created_at.strftime("%Y-%m-%d %H:%M") if log.created_at else "—" }}
+                                    </div>
+                                </div>
+                                <div class="cp-timeline-amount
+                                    {% if (log.amount_change or 0) >= 0 %} cp-amount-pos {% else %} cp-amount-neg {% endif %}">
+                                    {% if (log.amount_change or 0) >= 0 %}+{% endif %}
+                                    ${{ '%.2f'|format(log.amount_change or 0.0) }}
+                                </div>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="muted">
+                        No wallet activity yet. Once you top up or spend from your wallet, logs will appear here.
+                    </p>
+                {% endif %}
+            </div>
+        </aside>
+    </div>
+</section>
+{% endblock %}
