@@ -1328,3 +1328,93 @@ textarea:focus {
     margin-top: 48px;
     font-size: 1rem;
 }
+/* Wallet Revamp - Harvard/Dartmouth inspired spacing + fintech cards */
+.wallet-revamp {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 100px 20px;
+    text-align: center;
+}
+
+.balance-card {
+    background: var(--cp-surface-soft);
+    border-radius: var(--cp-radius-card);
+    padding: 60px;
+    margin-bottom: 80px;
+    box-shadow: var(--cp-shadow-subtle);
+}
+
+.balance-label {
+    font-size: 1.2rem;
+    color: var(--cp-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-family: Georgia, serif; /* Harvard serif touch */
+}
+
+.balance-amount {
+    font-size: 5.5rem;
+    font-weight: 800;
+    margin: 24px 0;
+    color: var(--cp-text-main);
+}
+
+.wallet-actions {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    margin-bottom: 100px;
+    flex-wrap: wrap;
+}
+
+.wallet-actions .cp-btn-large {
+    padding: 24px 60px;
+    font-size: 1.4rem;
+    min-width: 250px;
+}
+
+.transactions-card {
+    background: var(--cp-surface);
+    border-radius: var(--cp-radius-card);
+    padding: 60px;
+    box-shadow: var(--cp-shadow-subtle);
+    text-align: left;
+}
+
+.transactions-card h2 {
+    text-align: center;
+    margin-bottom: 40px;
+    font-size: 2.2rem;
+    font-family: Georgia, serif;
+}
+
+.transaction-list {
+    list-style: none;
+}
+
+.transaction-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px 0;
+    border-bottom: 1px solid var(--cp-border-subtle);
+}
+
+.transaction-details strong {
+    display: block;
+    font-size: 1.1rem;
+}
+
+.transaction-amount {
+    font-size: 1.4rem;
+    font-weight: 700;
+}
+
+.positive { color: var(--cp-success); }
+.negative { color: var(--cp-danger); }
+
+/* Button hover cool effect */
+.cp-btn-large:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px rgba(37, 99, 235, 0.3);
+}
