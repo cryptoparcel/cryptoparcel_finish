@@ -1131,3 +1131,68 @@ textarea:focus {
     align-items: center;
     gap: 20px;
 }
+/* Simple fixes for clean look */
+.container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 40px;
+}
+
+.cp-nav {
+    padding: 24px 40px;
+    gap: 40px;
+    flex-wrap: wrap;
+}
+
+.cp-nav-left {
+    gap: 60px;
+    align-items: center;
+}
+
+.cp-nav-links a {
+    padding: 10px 16px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.cp-nav-right {
+    gap: 20px;
+    align-items: center;
+}
+
+/* Logo blue top left */
+.cp-logo-large {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--cp-accent); /* Blue */
+}
+
+/* Avatar circle */
+.avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--cp-accent);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1rem;
+}
+
+/* Main padding */
+.cp-main {
+    padding: 60px 20px;
+}
+
+/* Mobile nav fix */
+@media (max-width: 768px) {
+    .cp-nav {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .cp-nav-right {
+        align-self: flex-end;
+    }
+}
