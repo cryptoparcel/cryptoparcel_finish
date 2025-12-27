@@ -8,76 +8,36 @@
 </head>
 <body>
 <div class="cp-page">
-
-    <!-- Top nav -->
     <header class="cp-nav">
-        <div class="cp-nav-left">
-            <a href="{{ url_for('index') }}" class="cp-logo">
-                <span class="cp-logo-icon">📦</span>
-                <span class="cp-logo-text">CryptoParcel</span>
-            </a>
-
+        <div class="container nav-container">
+            <a href="{{ url_for('index') }}" class="cp-logo">CryptoParcel</a>
             <nav class="cp-nav-links">
                 <a href="{{ url_for('index') }}">Home</a>
                 {% if current_user.is_authenticated %}
                     <a href="{{ url_for('dashboard') }}">Dashboard</a>
                     <a href="{{ url_for('orders') }}">Orders</a>
                     <a href="{{ url_for('wallet') }}">Wallet</a>
+                    <a href="{{ url_for('create_label') }}">Create Label</a>
                 {% endif %}
             </nav>
-        </div>
-
-        <div class="cp-nav-right">
-            {% if current_user.is_authenticated %}
-                <a href="{{ url_for('create_label') }}" class="cp-nav-primary">
-                    Create label
-                </a>
-
-                <!-- Pure CSS user dropdown using a hidden checkbox -->
-                <div class="cp-user-menu">
-                    <input type="checkbox" id="cp-user-toggle" class="cp-user-toggle">
-                    <label for="cp-user-toggle" class="cp-user-trigger">
-                        <div class="cp-user-avatar">
-                            {{ (current_user.email or 'U')[:1] | upper }}
-                        </div>
-                        <div class="cp-user-meta">
-                            <span class="cp-user-label">Signed in</span>
-                            <span class="cp-user-email">
-                                {{ current_user.email or 'Account' }}
-                            </span>
-                        </div>
-                        <span class="cp-user-caret">▾</span>
-                    </label>
-                    <div class="cp-user-dropdown">
-                        <a href="{{ url_for('dashboard') }}">Dashboard</a>
-                        <a href="{{ url_for('orders') }}">Orders</a>
-                        <a href="{{ url_for('wallet') }}">Wallet</a>
-                        <a href="{{ url_for('api_keys') }}">API keys</a>
-                        <a href="/settings">Settings</a> <!-- settings placeholder -->
-                        <div class="cp-user-divider"></div>
-                        <a href="{{ url_for('logout') }}">Sign out</a>
-                    </div>
-                </div>
-            {% else %}
-                <a href="{{ url_for('login') }}" class="cp-nav-ghost">
-                    Log in
-                </a>
-                <a href="{{ url_for('register') }}" class="cp-nav-primary">
-                    Sign up
-                </a>
-            {% endif %}
+            <div class="cp-nav-right">
+                {% if current_user.is_authenticated %}
+                    <span class="avatar">{{ current_user.email[0]|upper }}</span>
+                    <a href="{{ url_for('logout') }}" class="btn secondary">Logout</a>
+                {% else %}
+                    <a href="{{ url_for('login') }}" class="btn secondary">Login</a>
+                    <a href="{{ url_for('register') }}" class="btn primary">Sign Up</a>
+                {% endif %}
+            </div>
         </div>
     </header>
 
-    <!-- Flash messages + page content -->
-    <main class="cp-main">
+    <main class="cp-main container">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
-                <div class="card" style="margin-bottom: 14px;">
+                <div class="flash-messages">
                     {% for category, message in messages %}
-                        <div class="small" style="margin-bottom: 4px;">
-                            {{ message }}
-                        </div>
+                        <div class="flash {{ category }}">{{ message }}</div>
                     {% endfor %}
                 </div>
             {% endif %}
@@ -87,12 +47,8 @@
     </main>
 
     <footer class="cp-footer">
-        <div>© {{ 2025 }} CryptoParcel. All rights reserved.</div>
-        <div class="cp-footer-links">
-            <a href="{{ url_for('index') }}">Home</a>
-            {% if current_user.is_authenticated %}
-                <a href="{{ url_for('dashboard') }}">Dashboard</a>
-            {% endif %}
+        <div class="container">
+            © 2025 CryptoParcel · <a href="{{ url_for('terms') }}">Terms</a> · <a href="{{ url_for('privacy') }}">Privacy</a>
         </div>
     </footer>
 </div>
