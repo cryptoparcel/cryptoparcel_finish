@@ -1418,3 +1418,86 @@ textarea:focus {
     transform: translateY(-4px);
     box-shadow: 0 20px 40px rgba(37, 99, 235, 0.3);
 }
+/* Balanced, elegant spacing - not too big */
+.wallet-revamp, .dashboard-spacious {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 80px 20px;
+    text-align: center;
+}
+
+.balance-card {
+    background: var(--cp-surface-soft);
+    border-radius: var(--cp-radius-card);
+    padding: 50px;
+    margin-bottom: 60px;
+    box-shadow: var(--cp-shadow-subtle);
+}
+
+.balance-label {
+    font-size: 1rem;
+    color: var(--cp-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-family: Georgia, serif;
+}
+
+.balance-amount {
+    font-size: 4rem; /* Reduced from 5.5rem */
+    font-weight: 700;
+    margin: 20px 0;
+    color: var(--cp-text-main);
+}
+
+.wallet-actions {
+    display: flex;
+    justify-content: center;
+    gap: 32px;
+    margin-bottom: 80px;
+    flex-wrap: wrap;
+}
+
+.wallet-actions .cp-btn-large {
+    padding: 18px 50px; /* Smaller than before */
+    font-size: 1.2rem;
+    min-width: 220px;
+}
+
+.transactions-card {
+    background: var(--cp-surface);
+    border-radius: var(--cp-radius-card);
+    padding: 50px;
+    box-shadow: var(--cp-shadow-subtle);
+    text-align: left;
+}
+
+.transactions-card h2 {
+    text-align: center;
+    margin-bottom: 32px;
+    font-size: 1.8rem;
+    font-family: Georgia, serif;
+}
+
+.transaction-item {
+    padding: 20px 0;
+}
+
+.transaction-details strong {
+    font-size: 1rem;
+}
+
+.transaction-amount {
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+/* Subtle hover */
+.cp-btn-large:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 30px rgba(37, 99, 235, 0.25);
+}
+
+/* Apply similar balance to dashboard if needed */
+.dashboard-spacious .balance-amount {
+    font-size: 4rem;
+}
