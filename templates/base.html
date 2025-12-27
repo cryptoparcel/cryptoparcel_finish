@@ -10,9 +10,9 @@
 <div class="cp-page">
     <header class="cp-nav">
         <div class="cp-nav-left">
-            <a href="{{ url_for('index') }}" class="cp-logo-large">CryptoParcel</a>
+            <a href="{{ url_for('index') }}" class="cp-logo-large">CRYPTOPARCEL</a>
         </div>
-        <nav class="cp-nav-links">
+        <nav class="cp-nav-center">
             <a href="{{ url_for('index') }}">Home</a>
             {% if current_user.is_authenticated %}
                 <a href="{{ url_for('dashboard') }}">Dashboard</a>
