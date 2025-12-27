@@ -1196,3 +1196,19 @@ textarea:focus {
         align-self: flex-end;
     }
 }
+.support-clean {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 80px 20px;
+    text-align: center;
+}
+
+.support-clean .form {
+    text-align: left;
+    max-width: 600px;
+    margin: 40px auto 0;
+}
+
+.support-clean .field {
+    margin-bottom: 24px;
+}
