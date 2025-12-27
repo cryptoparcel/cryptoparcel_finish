@@ -1,15 +1,39 @@
 {% extends "base.html" %}
+{% block title %}Support — CryptoParcel{% endblock %}
 {% block content %}
-<section class="cp-inner">
-    <div class="cp-inner-header">
-        <h1>Support</h1>
-        <p>Need help with CryptoParcel? Reach out and we&rsquo;ll get back to you.</p>
-    </div>
-    <div class="cp-inner-layout">
-        <div class="cp-card">
-            <p>Email: <a href="mailto:support@cryptoparcel.com">support@cryptoparcel.com</a></p>
-            <p>Include your account email and (if applicable) your order or payment ID.</p>
+<section class="support-clean">
+    <h1>Get support</h1>
+    <p class="muted">Have a question or issue? Send us a message and we'll reply to your email.</p>
+
+    <form method="POST" class="card form">
+        <div class="field">
+            <label>Your email</label>
+            <input type="email" name="email" value="{{ current_user.email }}" required>
         </div>
-    </div>
+        <div class="field">
+            <label>Order number (optional)</label>
+            <input type="text" name="order_id" placeholder="e.g. #123">
+        </div>
+        <div class="field">
+            <label>Reason</label>
+            <select name="reason" required>
+                <option value="">Choose one...</option>
+                <option>Payment problem</option>
+                <option>Label not downloading</option>
+                <option>Wrong address</option>
+                <option>Refund request</option>
+                <option>Other</option>
+            </select>
+        </div>
+        <div class="field">
+            <label>Your message</label>
+            <textarea name="message" rows="7" placeholder="Tell us what's going on..." required></textarea>
+        </div>
+        <button type="submit" class="cp-btn-primary cp-btn-large">Send message</button>
+    </form>
+
+    <p class="muted" style="margin-top: 40px;">
+        Or email us directly: <strong>cryptoparcelstore@gmail.com</strong>
+    </p>
 </section>
 {% endblock %}
