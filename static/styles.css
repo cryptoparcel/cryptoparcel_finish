@@ -1261,3 +1261,70 @@ textarea:focus {
         flex-direction: column;
     }
 }
+/* Clean, spacious login/register page */
+.auth-clean {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 70vh;
+    padding: 40px 20px;
+}
+
+.auth-card {
+    background: var(--cp-surface);
+    border-radius: var(--cp-radius-card);
+    border: 1px solid var(--cp-border-subtle);
+    padding: 60px 80px;
+    box-shadow: var(--cp-shadow-soft);
+    max-width: 500px;
+    width: 100%;
+    text-align: center;
+}
+
+.auth-card h1 {
+    font-size: 2.8rem;
+    margin-bottom: 16px;
+    color: var(--cp-text-main);
+}
+
+.auth-card .muted {
+    margin-bottom: 48px;
+    font-size: 1.1rem;
+}
+
+.auth-form .field {
+    margin-bottom: 32px;
+    text-align: left;
+}
+
+.auth-form label {
+    display: block;
+    margin-bottom: 10px;
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--cp-text-main);
+}
+
+.auth-form input {
+    width: 100%;
+    padding: 18px;
+    border-radius: 12px;
+    border: 1px solid var(--cp-border-strong);
+    font-size: 1.1rem;
+}
+
+.auth-form input:focus {
+    outline: 3px solid var(--cp-accent-soft);
+}
+
+.auth-form .cp-btn-large {
+    width: 100%;
+    padding: 22px;
+    font-size: 1.4rem;
+    margin-top: 20px;
+}
+
+.auth-footer {
+    margin-top: 48px;
+    font-size: 1rem;
+}
