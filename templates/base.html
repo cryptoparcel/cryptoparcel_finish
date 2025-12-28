@@ -11,7 +11,7 @@
   <!-- Main stylesheet -->
   <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
   
-  <!-- Your global app.js (price estimation, etc.) -->
+  <!-- Global app.js -->
   <script src="{{ url_for('static', filename='app.js') }}" defer></script>
 </head>
 <body>
@@ -25,15 +25,13 @@
 
       <nav class="cp-nav-center">
         {% if current_user.is_authenticated %}
-          <a href="{{ url_for('create_label') }}" class="cp-nav-primary">Create label</a>
+          <a href="{{ url_for('create_label') }}" class="cp-nav-primary">Create Label</a>
           <a href="{{ url_for('orders') }}" class="cp-nav-ghost">Orders</a>
-          <a href="{{ url_for('wallet') }}" class="cp-nav-ghost">Balance</a>
-          <a href="{{ url_for('dashboard') }}" class="cp-nav-ghost">Dashboard</a>
+          <a href="{{ url_for('wallet') }}" class="cp-nav-ghost">Wallet</a>
           <a href="{{ url_for('settings') }}" class="cp-nav-ghost">Settings</a>
           <a href="{{ url_for('support') }}" class="cp-nav-ghost">Support</a>
         {% else %}
-          <a href="{{ url_for('register') }}" class="cp-nav-primary">Create label</a>
-          <a href="{{ url_for('index') }}#pricing" class="cp-nav-ghost">Pricing</a>
+          <a href="{{ url_for('register') }}" class="cp-nav-primary">Get Started</a>
           <a href="{{ url_for('support') }}" class="cp-nav-ghost">Support</a>
         {% endif %}
       </nav>
@@ -69,19 +67,18 @@
       <div>© 2025 CryptoParcel</div>
       <div class="cp-footer-links">
         <a href="{{ url_for('support') }}">Support</a>
-        {% if current_user.is_authenticated %}
-          <a href="{{ url_for('api_keys') }}">API</a>
-        {% endif %}
-        <span class="cp-footer-note">USPS/UPS/FedEx names are trademarks of their owners. Not affiliated.</span>
+        <span class="cp-footer-note">
+          USPS/UPS/FedEx names are trademarks of their owners. Not affiliated.
+        </span>
       </div>
     </div>
   </footer>
 
 </div>
 
-<!-- Global scripts: loading spinner + auto-dismiss flash messages -->
+<!-- Global scripts -->
 <script>
-// Form submit loading spinner (works on any button with id="submit-btn")
+// Loading spinner for submit buttons
 document.querySelectorAll('form').forEach(form => {
   form.addEventListener('submit', function () {
     const btn = form.querySelector('#submit-btn');
@@ -93,7 +90,7 @@ document.querySelectorAll('form').forEach(form => {
   });
 });
 
-// Auto-dismiss flash messages after 6 seconds
+// Auto-dismiss flash messages
 document.querySelectorAll('.flash').forEach(flash => {
   setTimeout(() => {
     flash.style.transition = 'opacity 0.5s ease';
