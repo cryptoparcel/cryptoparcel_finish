@@ -5,7 +5,7 @@
   <div class="container">
     <div style="text-align: center; margin-bottom: 48px;">
       <h1>Create a Shipping Label</h1>
-      <p>Fast crypto payments. Real labels. No KYC.</p>
+      <p>Fast and simple. Pay with crypto or your wallet balance.</p>
     </div>
 
     <form method="POST" class="cp-form-card">
@@ -18,7 +18,7 @@
 
       <div class="cp-field-group">
         <label>Street Address</label>
-        <input type="text" id="to_street" name="to_address" required placeholder="Start typing address..." autocomplete="off">
+        <input type="text" name="to_address" required placeholder="123 Example Street">
       </div>
 
       <div class="cp-field-group">
@@ -29,15 +29,67 @@
       <div class="cp-field-grid">
         <div class="cp-field-group">
           <label>City</label>
-          <input type="text" id="to_city" name="to_city" required readonly>
+          <input type="text" name="to_city" required>
         </div>
         <div class="cp-field-group">
           <label>State</label>
-          <input type="text" id="to_state" name="to_state" required readonly>
+          <select name="to_state" required>
+            <option value="">Select state</option>
+            <option value="AL">Alabama</option>
+            <option value="AK">Alaska</option>
+            <option value="AZ">Arizona</option>
+            <option value="AR">Arkansas</option>
+            <option value="CA">California</option>
+            <option value="CO">Colorado</option>
+            <option value="CT">Connecticut</option>
+            <option value="DE">Delaware</option>
+            <option value="FL">Florida</option>
+            <option value="GA">Georgia</option>
+            <option value="HI">Hawaii</option>
+            <option value="ID">Idaho</option>
+            <option value="IL">Illinois</option>
+            <option value="IN">Indiana</option>
+            <option value="IA">Iowa</option>
+            <option value="KS">Kansas</option>
+            <option value="KY">Kentucky</option>
+            <option value="LA">Louisiana</option>
+            <option value="ME">Maine</option>
+            <option value="MD">Maryland</option>
+            <option value="MA">Massachusetts</option>
+            <option value="MI">Michigan</option>
+            <option value="MN">Minnesota</option>
+            <option value="MS">Mississippi</option>
+            <option value="MO">Missouri</option>
+            <option value="MT">Montana</option>
+            <option value="NE">Nebraska</option>
+            <option value="NV">Nevada</option>
+            <option value="NH">New Hampshire</option>
+            <option value="NJ">New Jersey</option>
+            <option value="NM">New Mexico</option>
+            <option value="NY">New York</option>
+            <option value="NC">North Carolina</option>
+            <option value="ND">North Dakota</option>
+            <option value="OH">Ohio</option>
+            <option value="OK">Oklahoma</option>
+            <option value="OR">Oregon</option>
+            <option value="PA">Pennsylvania</option>
+            <option value="RI">Rhode Island</option>
+            <option value="SC">South Carolina</option>
+            <option value="SD">South Dakota</option>
+            <option value="TN">Tennessee</option>
+            <option value="TX">Texas</option>
+            <option value="UT">Utah</option>
+            <option value="VT">Vermont</option>
+            <option value="VA">Virginia</option>
+            <option value="WA">Washington</option>
+            <option value="WV">West Virginia</option>
+            <option value="WI">Wisconsin</option>
+            <option value="WY">Wyoming</option>
+          </select>
         </div>
         <div class="cp-field-group">
           <label>ZIP Code</label>
-          <input type="text" id="to_zip" name="to_zip" required readonly>
+          <input type="text" name="to_zip" required placeholder="10001">
         </div>
       </div>
 
@@ -55,7 +107,7 @@
 
       <div class="cp-field-group">
         <label>Street Address</label>
-        <input type="text" id="from_street" name="from_address" required placeholder="Start typing address..." autocomplete="off">
+        <input type="text" name="from_address" required placeholder="456 Main Street">
       </div>
 
       <div class="cp-field-group">
@@ -66,15 +118,20 @@
       <div class="cp-field-grid">
         <div class="cp-field-group">
           <label>City</label>
-          <input type="text" id="from_city" name="from_city" required readonly>
+          <input type="text" name="from_city" required>
         </div>
         <div class="cp-field-group">
           <label>State</label>
-          <input type="text" id="from_state" name="from_state" required readonly>
+          <select name="from_state" required>
+            <option value="">Select state</option>
+            <option value="AL">Alabama</option>
+            <!-- Repeat the same state list as above -->
+            <option value="WY">Wyoming</option>
+          </select>
         </div>
         <div class="cp-field-group">
           <label>ZIP Code</label>
-          <input type="text" id="from_zip" name="from_zip" required readonly>
+          <input type="text" name="from_zip" required placeholder="90210">
         </div>
       </div>
 
@@ -88,7 +145,7 @@
       <div class="cp-field-grid">
         <div class="cp-field-group">
           <label>Carrier</label>
-          <select name="carrier" id="carrier">
+          <select name="carrier">
             <option value="USPS">USPS</option>
             <option value="UPS">UPS</option>
             <option value="FedEx">FedEx</option>
@@ -96,7 +153,7 @@
         </div>
         <div class="cp-field-group">
           <label>Service</label>
-          <select name="service" id="service" required>
+          <select name="service" required>
             <option value="">Select service...</option>
             <optgroup label="USPS">
               <option value="USPS Ground Advantage">Ground Advantage</option>
@@ -122,31 +179,17 @@
           <label>Weight (oz)</label>
           <input type="number" step="0.1" name="weight_oz" id="weight_oz" required placeholder="16.0">
         </div>
-        <div class="cp-field-group">
-          <label>Length (in)</label>
-          <input type="number" step="0.1" name="length_in" placeholder="11.0">
-        </div>
-        <div class="cp-field-group">
-          <label>Width (in)</label>
-          <input type="number" step="0.1" name="width_in" placeholder="8.0">
-        </div>
-        <div class="cp-field-group">
-          <label>Height (in)</label>
-          <input type="number" step="0.1" name="height_in" placeholder="4.0">
-        </div>
       </div>
 
-      <!-- Summary at Bottom -->
-      <div style="margin-top: 48px; padding: 24px; background: var(--cp-surface-soft); border-radius: var(--cp-radius-card);">
-        <h2 style="margin: 0 0 16px;">Order Summary</h2>
-        <div style="display: flex; justify-content: space-between; font-size: 1.2rem; margin-bottom: 16px;">
-          <span>Estimated Cost (USD)</span>
-          <strong id="price-usd">$0.00</strong>
-        </div>
-        <div style="display: flex; justify-content: space-between; color: var(--cp-text-muted);">
-          <span>Approx. in crypto (BTC)</span>
-          <strong id="price-btc">—</strong>
-        </div>
+      <!-- Simple Summary at Bottom -->
+      <div style="margin-top: 48px; padding: 24px; background: var(--cp-surface-soft); border-radius: var(--cp-radius-card); text-align: center;">
+        <h2 style="margin: 0 0 16px;">Estimated Cost</h2>
+        <p style="font-size: 1.8rem; margin: 0; color: var(--cp-accent);">
+          <strong id="price-usd">$0.00</strong> USD
+        </p>
+        <p style="margin: 16px 0 0; color: var(--cp-text-muted);">
+          Approx. <strong id="price-btc">—</strong> BTC
+        </p>
       </div>
 
       <button type="submit" class="cp-btn-large" id="submit-btn" style="margin-top: 32px;">
@@ -157,45 +200,7 @@
   </div>
 </section>
 
-<!-- Google Places Autocomplete -->
-<script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_API_KEY&libraries=places"></script>
 <script>
-  function initAutocomplete() {
-    const options = {
-      componentRestrictions: { country: "us" },
-      fields: ["address_components", "geometry"],
-      types: ["address"]
-    };
-
-    const toInput = document.getElementById('to_street');
-    const fromInput = document.getElementById('from_street');
-
-    const toAutocomplete = new google.maps.places.Autocomplete(toInput, options);
-    const fromAutocomplete = new google.maps.places.Autocomplete(fromInput, options);
-
-    function fillInAddress(autocomplete, prefix) {
-      const place = autocomplete.getPlace();
-      if (!place.address_components) return;
-
-      let city = '', state = '', zip = '';
-
-      for (const component of place.address_components) {
-        const types = component.types;
-        if (types.includes("locality")) city = component.long_name;
-        if (types.includes("administrative_area_level_1")) state = component.short_name;
-        if (types.includes("postal_code")) zip = component.long_name;
-      }
-
-      document.getElementById(prefix + '_city').value = city;
-      document.getElementById(prefix + '_state').value = state;
-      document.getElementById(prefix + '_zip').value = zip;
-    }
-
-    toAutocomplete.addListener('place_changed', () => fillInAddress(toAutocomplete, 'to'));
-    fromAutocomplete.addListener('place_changed', () => fillInAddress(fromAutocomplete, 'from'));
-  }
-
-  // Price calculation
   (function() {
     const service = document.getElementById('service');
     const weightOz = document.getElementById('weight_oz');
@@ -218,9 +223,9 @@
 
       usdEl.textContent = `$${usd.toFixed(2)}`;
 
-      // Approximate crypto prices (hardcoded for demo — update with real API later)
-      const rates = { BTC: 95000, ETH: 3300, LTC: 90 };
-      const btc = (usd / rates.BTC).toFixed(6);
+      // Hardcoded approx BTC rate (update if needed)
+      const btcRate = 95000; // Approx BTC price
+      const btc = (usd / btcRate).toFixed(6);
       btcEl.textContent = `${btc} BTC`;
     }
 
@@ -228,8 +233,5 @@
     weightOz && weightOz.addEventListener('input', () => setTimeout(update, 300));
     update();
   })();
-
-  // Load Google Places when page loads
-  window.onload = initAutocomplete;
 </script>
 {% endblock %}
