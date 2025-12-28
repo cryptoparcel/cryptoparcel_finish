@@ -1,57 +1,74 @@
 <!doctype html>
 <html lang="en">
 <head>
-    <meta charset="utf-8">
-    <title>{% block title %}CryptoParcel{% endblock %}</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <meta charset="utf-8">
+  <title>{% block title %}CryptoParcel{% endblock %}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
 <div class="cp-page">
-    <header class="cp-nav">
-        <div class="cp-nav-left">
-            <a href="{{ url_for('index') }}" class="cp-logo-large">CRYPTOPARCEL</a>
-        </div>
-        <nav class="cp-nav-center">
-            <a href="{{ url_for('index') }}">Home</a>
-            {% if current_user.is_authenticated %}
-                <a href="{{ url_for('dashboard') }}">Dashboard</a>
-                <a href="{{ url_for('orders') }}">Orders</a>
-                <a href="{{ url_for('wallet') }}">Wallet</a>
-                <a href="{{ url_for('create_label') }}">Create Label</a>
-                <a href="{{ url_for('settings') }}">Settings</a>
-                <!-- <a href="{{ url_for('support') }}">Support</a> -->
-            {% endif %}
-        </nav>
-        <div class="cp-nav-right">
-            {% if current_user.is_authenticated %}
-                <a href="{{ url_for('logout') }}" class="btn secondary">Logout</a>
-            {% else %}
-                <a href="{{ url_for('login') }}" class="btn secondary">Login</a>
-                <a href="{{ url_for('register') }}" class="btn primary">Sign Up</a>
-            {% endif %}
-        </div>
-    </header>
 
-    <main class="cp-main container">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                <div class="flash-messages">
-                    {% for category, message in messages %}
-                        <div class="flash {{ category }}">{{ message }}</div>
-                    {% endfor %}
-                </div>
-            {% endif %}
-        {% endwith %}
+  <header class="cp-nav">
+    <div class="container cp-nav-inner">
+      <div class="cp-nav-left">
+        <a href="{{ url_for('index') }}" class="cp-logo-large">CryptoParcel</a>
+      </div>
 
-        {% block content %}{% endblock %}
-    </main>
+      <nav class="cp-nav-center">
+        {% if current_user.is_authenticated %}
+          <a href="{{ url_for('create_label') }}" class="cp-nav-primary">Create label</a>
+          <a href="{{ url_for('orders') }}" class="cp-nav-ghost">Orders</a>
+          <a href="{{ url_for('wallet') }}" class="cp-nav-ghost">Balance</a>
+          <a href="{{ url_for('dashboard') }}" class="cp-nav-ghost">Dashboard</a>
+          <a href="{{ url_for('settings') }}" class="cp-nav-ghost">Settings</a>
+          <a href="{{ url_for('support') }}" class="cp-nav-ghost">Support</a>
+        {% else %}
+          <a href="{{ url_for('register') }}" class="cp-nav-primary">Create label</a>
+          <a href="{{ url_for('index') }}#pricing" class="cp-nav-ghost">Pricing</a>
+          <a href="{{ url_for('support') }}" class="cp-nav-ghost">Support</a>
+        {% endif %}
+      </nav>
 
-    <footer class="cp-footer">
-        <div class="container">
-            © 2025 CryptoParcel
-        </div>
-    </footer>
+      <div class="cp-nav-right">
+        {% if current_user.is_authenticated %}
+          <a href="{{ url_for('logout') }}" class="cp-nav-ghost">Log out</a>
+        {% else %}
+          <a href="{{ url_for('login') }}" class="cp-nav-ghost">Log in</a>
+        {% endif %}
+      </div>
+    </div>
+  </header>
+
+  <main class="cp-main">
+    <div class="container">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="flash-messages">
+            {% for category, message in messages %}
+              <div class="flash {{ category }}">{{ message }}</div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+
+      {% block content %}{% endblock %}
+    </div>
+  </main>
+
+  <footer class="cp-footer">
+    <div class="container cp-footer-inner">
+      <div>© 2025 CryptoParcel</div>
+      <div class="cp-footer-links">
+        <a href="{{ url_for('support') }}">Support</a>
+        {% if current_user.is_authenticated %}
+          <a href="{{ url_for('api_keys') }}">API</a>
+        {% endif %}
+        <span class="cp-footer-note">USPS/UPS/FedEx names are trademarks of their owners. Not affiliated.</span>
+      </div>
+    </div>
+  </footer>
+
 </div>
 </body>
 </html>
