@@ -22,10 +22,6 @@
           <label>Street Address</label>
           <input type="text" name="to_address" required placeholder="456 Oak Avenue">
         </div>
-        <div class="cp-field-group">
-          <label>Apartment, suite, etc. (optional)</label>
-          <input type="text" name="to_street2">
-        </div>
         <div class="cp-field-grid">
           <div class="cp-field-group">
             <label>City</label>
@@ -107,10 +103,6 @@
           <label>Street Address</label>
           <input type="text" name="from_address" required placeholder="123 Main Street">
         </div>
-        <div class="cp-field-group">
-          <label>Apartment, suite, etc. (optional)</label>
-          <input type="text" name="from_street2">
-        </div>
         <div class="cp-field-grid">
           <div class="cp-field-group">
             <label>City</label>
@@ -121,7 +113,7 @@
             <select name="from_state" required>
               <option value="">Select state</option>
               <option value="AL">Alabama</option>
-              <!-- same full list as above -->
+              <!-- same list as above -->
               <option value="WY">Wyoming</option>
             </select>
           </div>
@@ -153,17 +145,17 @@
               <optgroup label="USPS">
                 <option value="USPS Ground Advantage">Ground Advantage</option>
                 <option value="USPS Priority Mail">Priority Mail</option>
-                <option value="USPS Priority Mail Express" class="usps">Priority Mail Express</option>
+                <option value="USPS Priority Mail Express">Priority Mail Express</option>
               </optgroup>
               <optgroup label="UPS">
                 <option value="UPS Ground">Ground</option>
-                <option value="UPS 2nd Day Air" class="ups">2nd Day Air</option>
-                <option value="UPS Next Day Air" class="ups">Next Day Air</option>
+                <option value="UPS 2nd Day Air">2nd Day Air</option>
+                <option value="UPS Next Day Air">Next Day Air</option>
               </optgroup>
               <optgroup label="FedEx">
                 <option value="FedEx Ground">Ground</option>
-                <option value="FedEx 2Day" class="fedex">2Day</option>
-                <option value="FedEx Overnight" class="fedex">Overnight</option>
+                <option value="FedEx 2Day">2Day</option>
+                <option value="FedEx Overnight">Overnight</option>
               </optgroup>
             </select>
           </div>
@@ -194,7 +186,7 @@
         </button>
       </form>
 
-      <!-- Summary -->
+      <!-- Summary Sidebar -->
       <aside class="cp-side-card cp-sticky" id="price-card">
         <h3>Order Summary</h3>
         <div class="cp-summary">
