@@ -8,7 +8,10 @@
   {{ form.csrf_token }}
   <label>Amount (USD)</label>
   <input type="number" name="amount_usd" step="0.01" min="1" max="5000" required>
-  <button class="btn primary">Create crypto invoice</button>
+  <button type="submit" class="cp-btn-primary" id="submit-btn">
+  <span class="btn-text">Top Up Wallet</span>
+  <span class="btn-spinner" style="display:none; margin-left:8px;">⟳</span>
+</button>
 </form>
 </section>
 {% endblock %}
