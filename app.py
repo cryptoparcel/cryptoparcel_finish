@@ -263,7 +263,7 @@ def register_routes(app: Flask):
                 flash("Invalid email or password.", "error")
                 return redirect(url_for("login"))
             login_user(user)
-            return redirect(url_for("create_label"))  # Direct to main action
+            return redirect(url_for("create_label"))
         return render_template("auth/login.html")
 
     @app.route("/logout")
@@ -277,6 +277,280 @@ def register_routes(app: Flask):
     @login_required
     def orders():
         run_auto_cleanup()
+        orders = Order.query.filter_by(user_id=current_user.id).order_by(Order.created_at.desc()).all()
+        total_spent = db.session.query(func.coalesce(func.sum(Order.amount_usd), 0.0)) \
+            .filter(Order.user_id == current_user.id, Order.status.in_(["paid", "confirmed", "finished"])) \
+            .scalar() or 0.0
+        return render_template("orders.html", orders=orders, total_spent=total_spent)
+
+    @app.route("/orders/<int:order_id>")
+    @login_required
+    def order_detail(order_id):
+        order = Order.query.get_or_404(order_id)
+        if order.user_id != current_user.id and not is_admin():
+            flash("Unauthorized", "error")
+            return redirect(url_for("orders"))
+        return render_template("order_detail.html", order=order)
+
+    @app.route("/wallet")
+    @login_required
+    def wallet():
+        from models import Payment, WalletLog
+        np_id = request.args.get("NP_id") or request.args.get("np_id")
+        if np_id:
+            try:
+                data = get_nowpayments_payment(np_id)
+                payment_status = (data.get("payment_status") or "").lower()
+                order_id = data.get("order_id") or ""
+                if order_id.startswith("topup-"):
+                    raw_id = order_id.split("topup-", 1)[1]
+                    if raw_id.isdigit():
+                        payment = Payment.query.get(int(raw_id))
+                        if payment and payment.type == "topup" and payment.status != "paid" and payment_status in {"finished", "confirmed", "paid"}:
+                            user = User.query.get(payment.user_id)
+                            if user:
+                                user.balance_usd = (user.balance_usd or 0.0) + payment.amount_usd
+                                log_wallet_change(user, payment.amount_usd, "Wallet top-up via NOWPayments")
+                            payment.status = "paid"
+                            db.session.commit()
+            except Exception as e:
+                current_app.logger.warning(f"NOWPayments return error: {e}")
+
+        topups = Payment.query.filter_by(user_id=current_user.id, type="topup").order_by(Payment.created_at.desc()).limit(20).all()
+        logs = WalletLog.query.filter_by(user_id=current_user.id).order_by(WalletLog.created_at.desc()).limit(20).all()
+        balance = current_user.balance_usd or 0.0
+        return render_template("wallet.html", balance=balance, topups=topups, logs=logs)
+
+    @app.route("/wallet/topup", methods=["GET", "POST"])
+    @login_required
+    def wallet_topup():
+        from models import Payment
+        if request.method == "POST":
+            try:
+                amount = float(request.form.get("amount_usd", "0"))
+            except ValueError:
+                flash("Invalid amount.", "error")
+                return redirect(url_for("wallet_topup"))
+            if not (1 <= amount <= 5000):
+                flash("Amount must be $1–$5000.", "error")
+                return redirect(url_for("wallet_topup"))
+            payment = Payment(user_id=current_user.id, type="topup", amount_usd=amount, currency="crypto", status="waiting", provider="nowpayments")
+            db.session.add(payment)
+            db.session.commit()
+            try:
+                invoice = create_topup_invoice(payment)
+                payment.provider_payment_id = str(invoice.get("payment_id") or invoice.get("id") or "")
+                db.session.commit()
+                return redirect(invoice.get("invoice_url"))
+            except Exception as e:
+                current_app.logger.error(f"Topup invoice error: {e}")
+                payment.status = "payment_error"
+                db.session.commit()
+                flash("Payment failed. Try again.", "error")
+                return redirect(url_for("wallet"))
+        return render_template("wallet_topup.html", balance=current_user.balance_usd or 0.0)
+
+    @app.route("/create-label", methods=["GET", "POST"])
+    @login_required
+    def create_label():
+        from models import Order, Payment, User
+        if request.method == "POST":
+            payment_method = (request.form.get("payment_method") or "auto").lower()
+            service = request.form.get("service") or "USPS First-Class"
+            carrier_raw = (request.form.get("carrier") or "").strip().upper()
+            carrier = "USPS" if service.startswith("USPS") else "UPS" if service.startswith("UPS") else "FedEx" if service.startswith("FedEx") else carrier_raw or "Custom"
+            weight_lb_str = request.form.get("weight_lb") or ""
+            weight_oz_str = request.form.get("weight_oz") or ""
+            try:
+                weight_oz = float(weight_oz_str) if weight_oz_str else float(weight_lb_str) * 16.0 if weight_lb_str else 0.0
+            except ValueError:
+                flash("Invalid weight.", "error")
+                return redirect(url_for("create_label"))
+            if weight_oz <= 0 or weight_oz > 10000:
+                flash("Weight must be between 0 and 10,000 oz.", "error")
+                return redirect(url_for("create_label"))
+
+            # Address fields
+            from_name = request.form.get("from_name", "").strip()
+            from_address = request.form.get("from_address", "").strip()
+            from_city = request.form.get("from_city", "").strip()
+            from_state = request.form.get("from_state", "").strip()
+            from_zip = request.form.get("from_zip", "").strip()
+            to_name = request.form.get("to_name", "").strip()
+            to_address = request.form.get("to_address", "").strip()
+            to_city = request.form.get("to_city", "").strip()
+            to_state = request.form.get("to_state", "").strip()
+            to_zip = request.form.get("to_zip", "").strip()
+
+            if not all([from_name, from_address, from_city, from_state, from_zip]):
+                flash("From address incomplete.", "error")
+                return redirect(url_for("create_label"))
+            if not all([to_name, to_address, to_city, to_state, to_zip]):
+                flash("To address incomplete.", "error")
+                return redirect(url_for("create_label"))
+
+            from_full = f"{from_name}\n{from_address}\n{from_city}, {from_state} {from_zip}\nUnited States"
+            to_full = f"{to_name}\n{to_address}\n{to_city}, {to_state} {to_zip}\nUnited States"
+            reference = request.form.get("reference", "").strip()
+
+            amount_usd = calculate_label_price(carrier, service, weight_oz)
+
+            order = Order(
+                user_id=current_user.id,
+                carrier=carrier,
+                service=service,
+                weight_oz=weight_oz,
+                from_address=from_full,
+                to_address=to_full,
+                reference=reference,
+                amount_usd=amount_usd,
+                status="pending_payment",
+            )
+            db.session.add(order)
+            db.session.commit()
+
+            user_balance = current_user.balance_usd or 0.0
+
+            if payment_method == "wallet" or user_balance >= amount_usd:
+                if user_balance < amount_usd:
+                    flash("Insufficient balance. Top up or use crypto.", "error")
+                    return redirect(url_for("create_label"))
+                current_user.balance_usd = user_balance - amount_usd
+                order.status = "paid"
+                payment = Payment(
+                    order_id=order.id,
+                    user_id=current_user.id,
+                    type="label",
+                    provider="wallet",
+                    amount_usd=amount_usd,
+                    currency="usd",
+                    status="paid",
+                )
+                db.session.add(payment)
+                log_wallet_change(current_user, -amount_usd, f"Label #{order.id}")
+                db.session.commit()
+                flash("Label paid with wallet!", "success")
+                return redirect(url_for("order_detail", order_id=order.id))
+
+            # Crypto payment
+            try:
+                invoice = create_nowpayments_invoice(order)
+                payment = Payment(
+                    order_id=order.id,
+                    user_id=current_user.id,
+                    type="label",
+                    provider="nowpayments",
+                    provider_payment_id=str(invoice.get("payment_id") or ""),
+                    amount_usd=amount_usd,
+                    currency="crypto",
+                    status="waiting",
+                )
+                db.session.add(payment)
+                db.session.commit()
+                return redirect(invoice.get("invoice_url"))
+            except Exception as e:
+                current_app.logger.error(f"NOWPayments error: {e}")
+                order.status = "payment_error"
+                db.session.commit()
+                flash("Crypto payment failed. Try again.", "error")
+                return redirect(url_for("order_detail", order_id=order.id))
+
+        return render_template("create_label.html", balance=current_user.balance_usd or 0.0)
+
+    @app.route("/nowpayments/ipn", methods=["POST"])
+    @limiter.limit("30 per minute")
+    def nowpayments_ipn():
+        raw_body = request.data or b""
+        signature = request.headers.get("x-nowpayments-sig", "")
+        if not verify_nowpayments_signature(raw_body, signature):
+            return "invalid signature", 400
+        try:
+            data = request.get_json(force=True)
+        except Exception:
+            return "invalid json", 400
+        payment_id = str(data.get("payment_id") or "")
+        payment_status = (data.get("payment_status") or "").lower()
+        if not payment_id:
+            return "missing payment_id", 400
+        payment = Payment.query.filter_by(provider_payment_id=payment_id).first()
+        if not payment:
+            return "payment not found", 404
+        if payment_status in {"finished", "confirmed", "paid"} and payment.status != "paid":
+            payment.status = "paid"
+            if payment.type == "topup":
+                user = User.query.get(payment.user_id)
+                if user:
+                    user.balance_usd = (user.balance_usd or 0.0) + payment.amount_usd
+                    log_wallet_change(user, payment.amount_usd, "Wallet top-up")
+                db.session.commit()
+            elif payment.type == "label":
+                order = Order.query.get(payment.order_id)
+                if order:
+                    order.status = "paid"
+                    db.session.commit()
+        return "ok", 200
+
+    @app.route("/support", methods=["GET", "POST"])
+    def support():
+        if request.method == "POST":
+            email = request.form.get("email") or (current_user.email if current_user.is_authenticated else "")
+            order_id = request.form.get("order_id") or ""
+            reason = request.form.get("reason") or ""
+            message = request.form.get("message") or ""
+            current_app.logger.info(f"Support request: {email} | Order {order_id} | {reason} | {message}")
+            flash("Message sent! We'll reply soon.", "success")
+            return redirect(url_for("support"))
+        return render_template("support.html")
+
+    @app.errorhandler(404)
+    def not_found(e):
+        return render_template("errors/404.html"), 404
+
+    @app.errorhandler(500)
+    def server_error(e):
+        current_app.logger.error(f"Server error: {e}")
+        return render_template("errors/500.html"), 500
+
+app = create_app()
+
+@app.route("/settings", methods=["GET", "POST"])
+@login_required
+def settings():
+    from models import User
+    if request.method == "POST":
+        action = request.form.get("action")
+        if action == "change_password":
+            current = request.form.get("current_password", "")
+            new = request.form.get("new_password", "")
+            confirm = request.form.get("confirm_password", "")
+            if not check_password_hash(current_user.password_hash, current):
+                flash("Current password wrong.", "error")
+                return redirect(url_for("settings"))
+            if len(new) < 8:
+                flash("New password too short.", "error")
+                return redirect(url_for("settings"))
+            if new != confirm:
+                flash("Passwords don't match.", "error")
+                return redirect(url_for("settings"))
+            current_user.password_hash = generate_password_hash(new)
+            db.session.commit()
+            flash("Password updated.", "success")
+        elif action == "delete_account":
+            if request.form.get("confirm", "").lower() != "delete":
+                flash("Type DELETE to confirm.", "error")
+                return redirect(url_for("settings"))
+            logout_user()
+            Payment.query.filter_by(user_id=current_user.id).delete()
+            Order.query.filter_by(user_id=current_user.id).delete()
+            WalletLog.query.filter_by(user_id=current_user.id).delete()
+            db.session.delete(current_user)
+            db.session.commit()
+            flash("Account deleted.", "info")
+            return redirect(url_for("index"))
+    return render_template("settings.html")
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=int(os.getenv("PORT", 8000)), debug=True)        run_auto_cleanup()
         orders = Order.query.filter_by(user_id=current_user.id).order_by(Order.created_at.desc()).all()
         total_spent = db.session.query(func.coalesce(func.sum(Order.amount_usd), 0.0)) \
             .filter(Order.user_id == current_user.id, Order.status.in_(["paid", "confirmed", "finished"])) \
