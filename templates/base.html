@@ -4,7 +4,15 @@
   <meta charset="utf-8">
   <title>{% block title %}CryptoParcel{% endblock %}</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  
+  <!-- Favicon -->
+  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+  
+  <!-- Main stylesheet -->
   <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  
+  <!-- Your global app.js (price estimation, etc.) -->
+  <script src="{{ url_for('static', filename='app.js') }}" defer></script>
 </head>
 <body>
 <div class="cp-page">
@@ -70,5 +78,30 @@
   </footer>
 
 </div>
+
+<!-- Global scripts: loading spinner + auto-dismiss flash messages -->
+<script>
+// Form submit loading spinner (works on any button with id="submit-btn")
+document.querySelectorAll('form').forEach(form => {
+  form.addEventListener('submit', function () {
+    const btn = form.querySelector('#submit-btn');
+    if (btn) {
+      btn.disabled = true;
+      btn.querySelector('.btn-text').style.display = 'none';
+      btn.querySelector('.btn-spinner').style.display = 'inline';
+    }
+  });
+});
+
+// Auto-dismiss flash messages after 6 seconds
+document.querySelectorAll('.flash').forEach(flash => {
+  setTimeout(() => {
+    flash.style.transition = 'opacity 0.5s ease';
+    flash.style.opacity = '0';
+    setTimeout(() => flash.remove(), 500);
+  }, 6000);
+});
+</script>
+
 </body>
 </html>
