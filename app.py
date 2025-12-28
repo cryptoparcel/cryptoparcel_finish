@@ -281,7 +281,7 @@ def register_routes(app: Flask):
                 flash("Invalid email or password.", "error")
                 return redirect(url_for("login"))
             login_user(user)
-            return redirect(url_for("dashboard"))
+            return redirect(url_for("create_label"))
         return render_template("auth/login.html")
 
     @app.route("/logout")
