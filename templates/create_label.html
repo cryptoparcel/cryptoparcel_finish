@@ -77,7 +77,7 @@
           <label>State</label>
           <select name="from_state" required>
             <option value="">State</option>
-            <!-- Same state list as above -->
+            <!-- Same state list -->
             <option value="WY">WY</option>
           </select>
         </div>
@@ -101,9 +101,18 @@
         <div class="cp-field-group">
           <label>Package Type</label>
           <select id="package_type">
-            <option value="envelope">Envelope</option>
-            <option value="pak">Pak</option>
-            <option value="box">Your Box</option>
+            <option value="your_box">Your Own Box</option>
+            <option value="your_tube">Your Own Tube</option>
+            <option value="usps_small_flat">USPS Small Flat Rate Box</option>
+            <option value="usps_medium_flat">USPS Medium Flat Rate Box</option>
+            <option value="usps_large_flat">USPS Large Flat Rate Box</option>
+            <option value="usps_flat_envelope">USPS Flat Rate Envelope</option>
+            <option value="ups_express_box">UPS Express Box</option>
+            <option value="ups_express_tube">UPS Express Tube</option>
+            <option value="fedex_box_small">FedEx Small Box</option>
+            <option value="fedex_box_medium">FedEx Medium Box</option>
+            <option value="fedex_envelope">FedEx Envelope</option>
+            <option value="fedex_tube">FedEx Tube</option>
           </select>
         </div>
         <div class="cp-field-group">
@@ -150,12 +159,12 @@
 
       <!-- Calculate Button -->
       <button type="button" id="calc-btn" class="cp-btn-primary" style="margin: 24px 0;">
-        Calculate Estimated Price
+        Calculate Label Price
       </button>
 
       <!-- Summary (hidden until calculated) -->
       <div id="summary-box" style="display:none; padding: 20px; background: var(--cp-surface-soft); border-radius: var(--cp-radius-card); text-align: center;">
-        <h2 style="margin: 0 0 12px;">Estimated Cost</h2>
+        <h2 style="margin: 0 0 12px;">Estimated Label Price</h2>
         <p style="font-size: 1.8rem; margin: 0; color: var(--cp-accent);">
           <strong id="price-usd">$0.00</strong> USD
         </p>
@@ -185,7 +194,7 @@
       const s = service.value || '';
 
       if (!s || w <= 0) {
-        alert("Select service and enter weight");
+        alert("Please select a service and enter weight");
         return;
       }
 
