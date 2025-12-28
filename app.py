@@ -217,10 +217,10 @@ def register_routes(app: Flask):
     from models import User, Order, Payment, WalletLog
 
     @app.route("/")
-def index():
-    if current_user.is_authenticated:
-        return redirect(url_for("create_label"))
-    return render_template("index.html")
+    def index():
+        if current_user.is_authenticated:
+            return redirect(url_for("create_label"))
+        return render_template("index.html")
 
     @app.route("/health")
     def health():
