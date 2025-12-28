@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Log in — CryptoParcel{% endblock %}
+{% block content %}
+<section class="auth-clean">
+    <div class="auth-card">
+        <h1>Log in</h1>
+        <p class="muted">Welcome back! Enter your email and password to access your account.</p>
+
+        <form method="POST" class="auth-form">
+            <div class="field">
+                <label for="email">Email address</label>
+                <input type="email" name="email" id="email" placeholder="you@example.com" required>
+            </div>
+
+            <div class="field">
+                <label for="password">Password</label>
+                <input type="password" name="password" id="password" required>
+            </div>
+
+            <button type="submit" class="cp-btn-primary cp-btn-large">Log in</button>
+        </form>
+
+        <p class="auth-footer muted">
+            Don't have an account? <a href="{{ url_for('register') }}">Sign up here</a>
+        </p>
+    </div>
+</section>
+{% endblock %}

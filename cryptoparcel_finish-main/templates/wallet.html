@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Wallet — CryptoParcel{% endblock %}
+{% block content %}
+<section class="wallet-revamp">
+    <div class="balance-card">
+        <p class="balance-label">Current wallet balance</p>
+        <h1 class="balance-amount">${{ '%.2f'|format(balance or 0.0) }}</h1>
+        <p class="muted">Available for instant label purchases</p>
+    </div>
+
+    <div class="wallet-actions">
+        <a href="{{ url_for('wallet_topup') }}" class="cp-btn-secondary cp-btn-large">Add funds</a>
+        <a href="{{ url_for('create_label') }}" class="cp-btn-primary cp-btn-large">Buy label</a>
+    </div>
+
+    <div class="transactions-card">
+        <h2>Transaction history</h2>
+        {% if logs %}
+            <ul class="transaction-list">
+                {% for log in logs %}
+                    <li class="transaction-item">
+                        <div class="transaction-details">
+                            <strong>{{ log.reason }}</strong>
+                            <span class="muted">{{ log.created_at.strftime('%b %d, %Y at %I:%M %p') }}</span>
+                        </div>
+                        <div class="transaction-amount {{ 'positive' if log.amount_change >= 0 else 'negative' }}">
+                            {% if log.amount_change >= 0 %}+{% endif %}${{ '%.2f'|format(log.amount_change|abs) }}
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="muted center spacious">No transactions yet. Add funds or buy a label to get started.</p>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

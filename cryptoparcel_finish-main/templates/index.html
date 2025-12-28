@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}CryptoParcel — Shipping labels with crypto{% endblock %}
+
+{% block content %}
+<section class="hero-clean hero-saas">
+  <h1>Shipping labels for USPS, UPS &amp; FedEx — pay with crypto.</h1>
+  <p class="hero-subtitle">Create a label, pay, download the PDF. Fast and simple.</p>
+
+  <div class="hero-actions">
+    {% if current_user.is_authenticated %}
+      <a href="{{ url_for('create_label') }}" class="cp-btn-primary cp-btn-large">Create a label</a>
+      <a href="{{ url_for('wallet') }}" class="cp-btn-secondary cp-btn-large">Wallet</a>
+    {% else %}
+      <a href="{{ url_for('register') }}" class="cp-btn-primary cp-btn-large">Create a label</a>
+      <a href="{{ url_for('login') }}" class="cp-btn-secondary cp-btn-large">Log in</a>
+    {% endif %}
+  </div>
+
+  <div class="cp-trust-strip" aria-label="Key benefits">
+    <span>Transparent total before payment</span>
+    <span>PDF label + tracking</span>
+    <span>Wallet balance (optional)</span>
+  </div>
+</section>
+
+<section id="pricing" class="cp-section">
+  <div class="cp-section-head">
+    <h2>Simple pricing</h2>
+    <p class="muted">Carrier rate + a small CryptoParcel fee shown clearly before you pay.</p>
+  </div>
+
+  <div class="cp-grid-2">
+    <div class="cp-price-card">
+      <div class="cp-kicker">Pay per label</div>
+      <h3>Buy labels anytime</h3>
+      <ul>
+        <li>Review total price first</li>
+        <li>Pay in crypto</li>
+        <li>Download the label PDF</li>
+      </ul>
+      {% if current_user.is_authenticated %}
+        <a class="cp-btn-primary cp-full-width" href="{{ url_for('create_label') }}">Create a label</a>
+      {% else %}
+        <a class="cp-btn-primary cp-full-width" href="{{ url_for('register') }}">Create a label</a>
+      {% endif %}
+    </div>
+
+    <div class="cp-price-card">
+      <div class="cp-kicker">Wallet</div>
+      <h3>Faster checkout</h3>
+      <ul>
+        <li>Add funds once</li>
+        <li>Use balance for labels</li>
+        <li>Track orders in your account</li>
+      </ul>
+      {% if current_user.is_authenticated %}
+        <a class="cp-btn-secondary cp-full-width" href="{{ url_for('wallet') }}">View wallet</a>
+      {% else %}
+        <a class="cp-btn-secondary cp-full-width" href="{{ url_for('register') }}">Create an account</a>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="cp-fineprint muted">
+    USPS®, UPS®, and FedEx® names are trademarks of their respective owners. CryptoParcel is not affiliated with them.
+  </div>
+</section>
+{% endblock %}

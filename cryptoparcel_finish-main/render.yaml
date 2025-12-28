@@ -1,0 +1,27 @@
+﻿services:
+  - type: web
+    name: cryptoparcel
+    env: docker
+    plan: starter
+    healthCheckPath: /health
+    preDeployCommand: FLASK_APP=wsgi:application python -m flask db upgrade
+    envVars:
+      - key: SECRET_KEY
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: NOWPAYMENTS_API_KEY
+        sync: false
+      - key: NOWPAYMENTS_IPN_SECRET
+        sync: false
+      - key: NOWPAYMENTS_BASE_URL
+        value: https://api.nowpayments.io
+      - key: FLASK_ENV
+        value: production
+      - key: APP_MODULE
+        value: wsgi:application
+      - key: WORKERS
+        value: "3"
+      - key: THREADS
+        value: "2"
+

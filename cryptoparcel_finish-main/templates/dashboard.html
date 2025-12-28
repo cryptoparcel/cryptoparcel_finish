@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — CryptoParcel{% endblock %}
+{% block content %}
+<section class="dashboard-spacious">
+    <div class="balance-section">
+        <p class="balance-label">Wallet balance</p>
+        <h1 class="balance-amount">${{ '%.2f'|format(balance or 0.0) }}</h1>
+    </div>
+
+    <a href="{{ url_for('create_label') }}" class="cp-btn-primary cp-btn-large centered">
+        Create new label
+    </a>
+
+    <div class="recent-section">
+        <h3>Recent orders</h3>
+        {% if recent_orders %}
+            <div class="recent-list">
+                {% for order in recent_orders %}
+                    <div class="recent-item">
+                        <div class="order-info">
+                            <strong>#{{ order.id }}</strong> — {{ order.carrier }} {{ order.service }}
+                            <br><span class="muted">${{ '%.2f'|format(order.amount_usd) }} · {{ order.created_at.strftime('%b %d, %Y') }}</span>
+                        </div>
+                        <a href="{{ url_for('order_detail', order_id=order.id) }}" class="btn secondary small">View</a>
+                    </div>
+                {% endfor %}
+            </div>
+            <p class="center"><a href="{{ url_for('orders') }}" class="muted">View all orders →</a></p>
+        {% else %}
+            <p class="muted center spacious">No orders yet. Create your first label above.</p>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}
