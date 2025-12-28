@@ -1,4 +1,4 @@
-from flask import (
+﻿from flask import (
     Flask,
     render_template,
     redirect,
@@ -18,6 +18,7 @@ from flask_login import (
 )
 from sqlalchemy import func
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.middleware.proxy_fix import ProxyFix
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
 import logging
@@ -32,7 +33,7 @@ import secrets
 from email.message import EmailMessage
 from config import Config
 from label_generator import generate_shipping_label_pdf
-from extensions import db, login_manager, limiter
+from extensions import db, login_manager, limiter, migrate
 
 load_dotenv()
 
@@ -48,10 +49,12 @@ def calculate_label_price(carrier: str, service: str, weight_oz: float) -> float
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1)
     # Core extensions
     db.init_app(app)
     login_manager.init_app(app)
     limiter.init_app(app)
+    migrate.init_app(app, db)
     # Logging
     handler = logging.StreamHandler()
     handler.setLevel(logging.INFO)
@@ -1104,3 +1107,4 @@ def settings():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 8000)), debug=True)
+
