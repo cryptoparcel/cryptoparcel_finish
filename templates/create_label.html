@@ -3,242 +3,233 @@
 {% block content %}
 <section class="cp-inner">
   <div class="container">
-    <div style="text-align: center; margin-bottom: 40px;">
+    <div style="text-align: center; margin-bottom: 48px;">
       <h1>Create a Shipping Label</h1>
-      <p>Fast and simple. Pay with crypto or your wallet balance.</p>
+      <p>Fast crypto payments. Real labels. No KYC.</p>
     </div>
 
-    <div class="cp-inner-layout">
-      <form method="POST" class="cp-form-card">
-        
-        <!-- Shipped To -->
-        <h2>Shipped To</h2>
-        <div class="cp-field-group">
-          <label>Recipient Name</label>
-          <input type="text" name="to_name" required placeholder="Jane Smith">
-        </div>
-        <div class="cp-field-group">
-          <label>Street Address</label>
-          <input type="text" name="to_address" required placeholder="456 Oak Avenue">
-        </div>
-        <div class="cp-field-grid">
-          <div class="cp-field-group">
-            <label>City</label>
-            <input type="text" name="to_city" required>
-          </div>
-          <div class="cp-field-group">
-            <label>State</label>
-            <select name="to_state" required>
-              <option value="">Select state</option>
-              <option value="AL">Alabama</option>
-              <option value="AK">Alaska</option>
-              <option value="AZ">Arizona</option>
-              <option value="AR">Arkansas</option>
-              <option value="CA">California</option>
-              <option value="CO">Colorado</option>
-              <option value="CT">Connecticut</option>
-              <option value="DE">Delaware</option>
-              <option value="FL">Florida</option>
-              <option value="GA">Georgia</option>
-              <option value="HI">Hawaii</option>
-              <option value="ID">Idaho</option>
-              <option value="IL">Illinois</option>
-              <option value="IN">Indiana</option>
-              <option value="IA">Iowa</option>
-              <option value="KS">Kansas</option>
-              <option value="KY">Kentucky</option>
-              <option value="LA">Louisiana</option>
-              <option value="ME">Maine</option>
-              <option value="MD">Maryland</option>
-              <option value="MA">Massachusetts</option>
-              <option value="MI">Michigan</option>
-              <option value="MN">Minnesota</option>
-              <option value="MS">Mississippi</option>
-              <option value="MO">Missouri</option>
-              <option value="MT">Montana</option>
-              <option value="NE">Nebraska</option>
-              <option value="NV">Nevada</option>
-              <option value="NH">New Hampshire</option>
-              <option value="NJ">New Jersey</option>
-              <option value="NM">New Mexico</option>
-              <option value="NY">New York</option>
-              <option value="NC">North Carolina</option>
-              <option value="ND">North Dakota</option>
-              <option value="OH">Ohio</option>
-              <option value="OK">Oklahoma</option>
-              <option value="OR">Oregon</option>
-              <option value="PA">Pennsylvania</option>
-              <option value="RI">Rhode Island</option>
-              <option value="SC">South Carolina</option>
-              <option value="SD">South Dakota</option>
-              <option value="TN">Tennessee</option>
-              <option value="TX">Texas</option>
-              <option value="UT">Utah</option>
-              <option value="VT">Vermont</option>
-              <option value="VA">Virginia</option>
-              <option value="WA">Washington</option>
-              <option value="WV">West Virginia</option>
-              <option value="WI">Wisconsin</option>
-              <option value="WY">Wyoming</option>
-            </select>
-          </div>
-          <div class="cp-field-group">
-            <label>ZIP Code</label>
-            <input type="text" name="to_zip" required placeholder="10001">
-          </div>
-        </div>
-        <div class="cp-field-group">
-          <label>Phone (optional)</label>
-          <input type="text" name="to_phone" placeholder="+1 (555) 123-4567">
-        </div>
+    <form method="POST" class="cp-form-card">
+      <!-- Shipped To -->
+      <h2>Shipped To</h2>
+      <div class="cp-field-group">
+        <label>Recipient Name</label>
+        <input type="text" name="to_name" required placeholder="Jane Smith">
+      </div>
 
-        <!-- Shipped From -->
-        <h2 style="margin-top: 48px;">Shipped From</h2>
+      <div class="cp-field-group">
+        <label>Street Address</label>
+        <input type="text" id="to_street" name="to_address" required placeholder="Start typing address..." autocomplete="off">
+      </div>
+
+      <div class="cp-field-group">
+        <label>Apartment, suite, unit, etc. (optional)</label>
+        <input type="text" name="to_street2" placeholder="Apt 4B">
+      </div>
+
+      <div class="cp-field-grid">
         <div class="cp-field-group">
-          <label>Name</label>
-          <input type="text" name="from_name" required placeholder="John Doe">
-        </div>
-        <div class="cp-field-group">
-          <label>Street Address</label>
-          <input type="text" name="from_address" required placeholder="123 Main Street">
-        </div>
-        <div class="cp-field-grid">
-          <div class="cp-field-group">
-            <label>City</label>
-            <input type="text" name="from_city" required>
-          </div>
-          <div class="cp-field-group">
-            <label>State</label>
-            <select name="from_state" required>
-              <option value="">Select state</option>
-              <option value="AL">Alabama</option>
-              <!-- same list as above -->
-              <option value="WY">Wyoming</option>
-            </select>
-          </div>
-          <div class="cp-field-group">
-            <label>ZIP Code</label>
-            <input type="text" name="from_zip" required placeholder="90210">
-          </div>
+          <label>City</label>
+          <input type="text" id="to_city" name="to_city" required readonly>
         </div>
         <div class="cp-field-group">
-          <label>Phone (optional)</label>
-          <input type="text" name="from_phone" placeholder="+1 (555) 987-6543">
+          <label>State</label>
+          <input type="text" id="to_state" name="to_state" required readonly>
         </div>
-
-        <!-- Package Details -->
-        <h2 style="margin-top: 48px;">Package Details</h2>
-        <div class="cp-field-grid">
-          <div class="cp-field-group">
-            <label>Carrier</label>
-            <select name="carrier" id="carrier">
-              <option value="USPS">USPS</option>
-              <option value="UPS">UPS</option>
-              <option value="FedEx">FedEx</option>
-            </select>
-          </div>
-          <div class="cp-field-group">
-            <label>Service</label>
-            <select name="service" id="service" required>
-              <option value="">Select service...</option>
-              <optgroup label="USPS">
-                <option value="USPS Ground Advantage">Ground Advantage</option>
-                <option value="USPS Priority Mail">Priority Mail</option>
-                <option value="USPS Priority Mail Express">Priority Mail Express</option>
-              </optgroup>
-              <optgroup label="UPS">
-                <option value="UPS Ground">Ground</option>
-                <option value="UPS 2nd Day Air">2nd Day Air</option>
-                <option value="UPS Next Day Air">Next Day Air</option>
-              </optgroup>
-              <optgroup label="FedEx">
-                <option value="FedEx Ground">Ground</option>
-                <option value="FedEx 2Day">2Day</option>
-                <option value="FedEx Overnight">Overnight</option>
-              </optgroup>
-            </select>
-          </div>
+        <div class="cp-field-group">
+          <label>ZIP Code</label>
+          <input type="text" id="to_zip" name="to_zip" required readonly>
         </div>
+      </div>
 
-        <div class="cp-field-grid">
-          <div class="cp-field-group">
-            <label>Weight (oz)</label>
-            <input type="number" step="0.1" name="weight_oz" id="weight_oz" required placeholder="16.0">
-          </div>
-          <div class="cp-field-group">
-            <label>Length (in)</label>
-            <input type="number" step="0.1" name="length_in" placeholder="11.0">
-          </div>
-          <div class="cp-field-group">
-            <label>Width (in)</label>
-            <input type="number" step="0.1" name="width_in" placeholder="8.0">
-          </div>
-          <div class="cp-field-group">
-            <label>Height (in)</label>
-            <input type="number" step="0.1" name="height_in" placeholder="4.0">
-          </div>
+      <div class="cp-field-group">
+        <label>Phone (optional)</label>
+        <input type="text" name="to_phone" placeholder="+1 (555) 123-4567">
+      </div>
+
+      <!-- Shipped From -->
+      <h2 style="margin-top: 48px;">Shipped From</h2>
+      <div class="cp-field-group">
+        <label>Name</label>
+        <input type="text" name="from_name" required placeholder="John Doe">
+      </div>
+
+      <div class="cp-field-group">
+        <label>Street Address</label>
+        <input type="text" id="from_street" name="from_address" required placeholder="Start typing address..." autocomplete="off">
+      </div>
+
+      <div class="cp-field-group">
+        <label>Apartment, suite, unit, etc. (optional)</label>
+        <input type="text" name="from_street2" placeholder="Suite 200">
+      </div>
+
+      <div class="cp-field-grid">
+        <div class="cp-field-group">
+          <label>City</label>
+          <input type="text" id="from_city" name="from_city" required readonly>
         </div>
-
-        <button type="submit" class="cp-btn-large" id="submit-btn" style="margin-top: 40px;">
-          <span class="btn-text">Continue to Payment</span>
-          <span class="btn-spinner" style="display:none; margin-left:10px;">⟳</span>
-        </button>
-      </form>
-
-      <!-- Summary Sidebar -->
-      <aside class="cp-side-card cp-sticky" id="price-card">
-        <h3>Order Summary</h3>
-        <div class="cp-summary">
-          <div class="cp-summary-row"><span>Carrier</span><strong id="sumCarrier">—</strong></div>
-          <div class="cp-summary-row"><span>Service</span><strong id="sumService">—</strong></div>
-          <div class="cp-summary-row"><span>Weight</span><strong id="sumWeight">—</strong></div>
-          <div class="cp-summary-row" style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--cp-border-subtle);">
-            <span>Estimated Cost</span>
-            <strong id="price-estimate" style="font-size: 1.4rem;">—</strong>
-          </div>
+        <div class="cp-field-group">
+          <label>State</label>
+          <input type="text" id="from_state" name="from_state" required readonly>
         </div>
-        <p class="muted small" style="margin-top: 20px;">Final price confirmed at checkout</p>
-        <a href="{{ url_for('wallet_topup') }}" class="cp-btn-secondary cp-full-width">Top Up Wallet</a>
-      </aside>
-    </div>
+        <div class="cp-field-group">
+          <label>ZIP Code</label>
+          <input type="text" id="from_zip" name="from_zip" required readonly>
+        </div>
+      </div>
+
+      <div class="cp-field-group">
+        <label>Phone (optional)</label>
+        <input type="text" name="from_phone" placeholder="+1 (555) 987-6543">
+      </div>
+
+      <!-- Package Details -->
+      <h2 style="margin-top: 48px;">Package Details</h2>
+      <div class="cp-field-grid">
+        <div class="cp-field-group">
+          <label>Carrier</label>
+          <select name="carrier" id="carrier">
+            <option value="USPS">USPS</option>
+            <option value="UPS">UPS</option>
+            <option value="FedEx">FedEx</option>
+          </select>
+        </div>
+        <div class="cp-field-group">
+          <label>Service</label>
+          <select name="service" id="service" required>
+            <option value="">Select service...</option>
+            <optgroup label="USPS">
+              <option value="USPS Ground Advantage">Ground Advantage</option>
+              <option value="USPS Priority Mail">Priority Mail</option>
+              <option value="USPS Priority Mail Express">Priority Mail Express</option>
+            </optgroup>
+            <optgroup label="UPS">
+              <option value="UPS Ground">Ground</option>
+              <option value="UPS 2nd Day Air">2nd Day Air</option>
+              <option value="UPS Next Day Air">Next Day Air</option>
+            </optgroup>
+            <optgroup label="FedEx">
+              <option value="FedEx Ground">Ground</option>
+              <option value="FedEx 2Day">2Day</option>
+              <option value="FedEx Overnight">Overnight</option>
+            </optgroup>
+          </select>
+        </div>
+      </div>
+
+      <div class="cp-field-grid">
+        <div class="cp-field-group">
+          <label>Weight (oz)</label>
+          <input type="number" step="0.1" name="weight_oz" id="weight_oz" required placeholder="16.0">
+        </div>
+        <div class="cp-field-group">
+          <label>Length (in)</label>
+          <input type="number" step="0.1" name="length_in" placeholder="11.0">
+        </div>
+        <div class="cp-field-group">
+          <label>Width (in)</label>
+          <input type="number" step="0.1" name="width_in" placeholder="8.0">
+        </div>
+        <div class="cp-field-group">
+          <label>Height (in)</label>
+          <input type="number" step="0.1" name="height_in" placeholder="4.0">
+        </div>
+      </div>
+
+      <!-- Summary at Bottom -->
+      <div style="margin-top: 48px; padding: 24px; background: var(--cp-surface-soft); border-radius: var(--cp-radius-card);">
+        <h2 style="margin: 0 0 16px;">Order Summary</h2>
+        <div style="display: flex; justify-content: space-between; font-size: 1.2rem; margin-bottom: 16px;">
+          <span>Estimated Cost (USD)</span>
+          <strong id="price-usd">$0.00</strong>
+        </div>
+        <div style="display: flex; justify-content: space-between; color: var(--cp-text-muted);">
+          <span>Approx. in crypto (BTC)</span>
+          <strong id="price-btc">—</strong>
+        </div>
+      </div>
+
+      <button type="submit" class="cp-btn-large" id="submit-btn" style="margin-top: 32px;">
+        <span class="btn-text">Continue to Payment</span>
+        <span class="btn-spinner" style="display:none; margin-left:10px;">⟳</span>
+      </button>
+    </form>
   </div>
 </section>
 
+<!-- Google Places Autocomplete -->
+<script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_API_KEY&libraries=places"></script>
 <script>
+  function initAutocomplete() {
+    const options = {
+      componentRestrictions: { country: "us" },
+      fields: ["address_components", "geometry"],
+      types: ["address"]
+    };
+
+    const toInput = document.getElementById('to_street');
+    const fromInput = document.getElementById('from_street');
+
+    const toAutocomplete = new google.maps.places.Autocomplete(toInput, options);
+    const fromAutocomplete = new google.maps.places.Autocomplete(fromInput, options);
+
+    function fillInAddress(autocomplete, prefix) {
+      const place = autocomplete.getPlace();
+      if (!place.address_components) return;
+
+      let city = '', state = '', zip = '';
+
+      for (const component of place.address_components) {
+        const types = component.types;
+        if (types.includes("locality")) city = component.long_name;
+        if (types.includes("administrative_area_level_1")) state = component.short_name;
+        if (types.includes("postal_code")) zip = component.long_name;
+      }
+
+      document.getElementById(prefix + '_city').value = city;
+      document.getElementById(prefix + '_state').value = state;
+      document.getElementById(prefix + '_zip').value = zip;
+    }
+
+    toAutocomplete.addListener('place_changed', () => fillInAddress(toAutocomplete, 'to'));
+    fromAutocomplete.addListener('place_changed', () => fillInAddress(fromAutocomplete, 'from'));
+  }
+
+  // Price calculation
   (function() {
-    const carrier = document.getElementById('carrier');
     const service = document.getElementById('service');
     const weightOz = document.getElementById('weight_oz');
-    const estimate = document.getElementById('price-estimate');
-    const card = document.getElementById('price-card');
-    const sumCarrier = document.getElementById('sumCarrier');
-    const sumService = document.getElementById('sumService');
-    const sumWeight = document.getElementById('sumWeight');
+    const usdEl = document.getElementById('price-usd');
+    const btcEl = document.getElementById('price-btc');
 
     function update() {
       const w = parseFloat(weightOz.value) || 0;
       const s = service.value || '';
-      sumCarrier.textContent = carrier.value || '—';
-      sumService.textContent = s || '—';
-      sumWeight.textContent = w > 0 ? `${w} oz` : '—';
 
       if (!s || w <= 0) {
-        estimate.textContent = '—';
-        card.classList.remove('price-card-active');
+        usdEl.textContent = '$0.00';
+        btcEl.textContent = '—';
         return;
       }
 
       let base = 3.0;
       if (/express|overnight|priority|next day|2day/i.test(s)) base += 2.0;
-      const price = Math.round((base + w * 0.10) * 100) / 100;
+      const usd = Math.round((base + w * 0.10) * 100) / 100;
 
-      estimate.textContent = `$${price.toFixed(2)} USD`;
-      card.classList.add('price-card-active');
+      usdEl.textContent = `$${usd.toFixed(2)}`;
+
+      // Approximate crypto prices (hardcoded for demo — update with real API later)
+      const rates = { BTC: 95000, ETH: 3300, LTC: 90 };
+      const btc = (usd / rates.BTC).toFixed(6);
+      btcEl.textContent = `${btc} BTC`;
     }
 
-    [carrier, service, weightOz].forEach(el => el && el.addEventListener('change', update));
+    [service, weightOz].forEach(el => el && el.addEventListener('change', update));
     weightOz && weightOz.addEventListener('input', () => setTimeout(update, 300));
     update();
   })();
+
+  // Load Google Places when page loads
+  window.onload = initAutocomplete;
 </script>
 {% endblock %}
