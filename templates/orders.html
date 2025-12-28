@@ -1,34 +1,83 @@
-{% extends 'base.html' %}
-{% block title %}Orders — CryptoParcel{% endblock %}
+{% extends "base.html" %}
+{% block title %}My Orders - CryptoParcel{% endblock %}
 {% block content %}
-<section class="section">
-  <div class="page-header">
-    <div>
-      <h2>All orders</h2>
-      <p class="muted">Every label you create will appear here. Paid orders let you download the label PDF and tracking.</p>
+<section class="cp-inner">
+  <div class="container">
+    <h1>My Orders</h1>
+
+    <!-- Balance + Stats Card -->
+    <div class="card" style="margin-bottom: 32px; padding: 24px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
+        <div>
+          <p class="muted">Wallet Balance</p>
+          <h2 style="margin: 8px 0; font-size: 2rem; color: var(--cp-accent);">
+            ${{ "%.2f"|format(current_user.balance_usd or 0.0) }}
+          </h2>
+          <a href="{{ url_for('wallet_topup') }}" class="cp-btn-primary">Top Up</a>
+        </div>
+        <div class="grid-3" style="text-align: center;">
+          <div>
+            <p class="muted small">Total Orders</p>
+            <strong style="font-size: 1.4rem;">{{ orders|length }}</strong>
+          </div>
+          <div>
+            <p class="muted small">Total Spent</p>
+            <strong style="font-size: 1.4rem;">
+              ${{ "%.2f"|format(total_spent or 0.0) }}
+            </strong>
+          </div>
+          <div>
+            <p class="muted small">Pending</p>
+            <strong style="font-size: 1.4rem;">
+              {{ orders|selectattr("status", "equalto", "pending_payment")|list|length }}
+            </strong>
+          </div>
+        </div>
+      </div>
     </div>
-    <div class="page-meta">
-      <a class="btn secondary" href="{{ url_for('orders_export') }}">Export CSV</a>
-    </div>
-  </div>
-  <div class="grid">
-  {% for order in orders %}
-    <div class="card">
-      <h4>Order #{{ order.id }}</h4>
-      <p>{{ order.carrier }} — {{ order.service }}</p>
-      {% if order.reference %}
-        <p class="muted">Reference: {{ order.reference }}</p>
-      {% endif %}
-      <p>Amount: ${{ '%.2f'|format(order.amount_usd) }}</p>
-      <p>
-        Status:
-        <span class="status-badge status-badge-{{ order.status }}">{{ order.status }}</span>
-      </p>
-      <a class="btn secondary" href="{{ url_for('order_detail', order_id=order.id) }}">View</a>
-    </div>
-  {% else %}
-    <p class="muted">No orders yet. <a href="{{ url_for('create_label') }}">Create your first label</a>.</p>
-  {% endfor %}
+
+    <!-- Orders List -->
+    {% if orders %}
+      <div class="card">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Order ID</th>
+              <th>Date</th>
+              <th>Carrier & Service</th>
+              <th>Weight</th>
+              <th>Amount</th>
+              <th>Status</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for order in orders %}
+              <tr>
+                <td><a href="{{ url_for('order_detail', order_id=order.id) }}">#{{ order.id }}</a></td>
+                <td>{{ order.created_at.strftime('%b %d, %Y') }}</td>
+                <td>{{ order.carrier }} {{ order.service }}</td>
+                <td>{{ "%.2f"|format(order.weight_oz / 16) }} lb</td>
+                <td>${{ "%.2f"|format(order.amount_usd) }}</td>
+                <td>
+                  <span class="status-badge status-badge-{{ order.status.replace('_', '-') }}">
+                    {{ order.status.replace('_', ' ')|title }}
+                  </span>
+                </td>
+                <td><a href="{{ url_for('order_detail', order_id=order.id) }}">View →</a></td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="card" style="text-align: center; padding: 40px;">
+        <p>You haven't created any labels yet.</p>
+        <a href="{{ url_for('create_label') }}" class="cp-btn-primary cp-btn-large" style="margin-top: 16px;">
+          Create Your First Label
+        </a>
+      </div>
+    {% endif %}
   </div>
 </section>
 {% endblock %}
