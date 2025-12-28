@@ -1,4 +1,4 @@
-﻿from flask import (
+from flask import (
     Flask,
     render_template,
     redirect,
@@ -91,10 +91,11 @@ def load_user(user_id):
         return None
 
 def is_admin() -> bool:
-    """Admin if logged in as user id 1 OR admin session flag set."""
-    if getattr(current_user, "is_authenticated", False) and current_user.id == 1:
-        return True
-    return bool(session.get("admin_auth"))
+    """Only the first registered user (ID 1) has admin access."""
+    return (
+        current_user.is_authenticated
+        and current_user.id == 1
+    )
 
 def admin_required(fn):
     from functools import wraps
@@ -102,7 +103,7 @@ def admin_required(fn):
     def wrapper(*args, **kwargs):
         if not is_admin():
             flash("Admin access required.", "error")
-            return redirect(url_for("admin_login"))
+            return redirect(url_for("index"))
         return fn(*args, **kwargs)
     return wrapper
 
@@ -873,28 +874,6 @@ def register_routes(app: Flask):
                     db.session.commit()
         return "ok", 200
 
-    @app.route("/admin/login", methods=["GET", "POST"])
-    def admin_login():
-        if is_admin():
-            return redirect(url_for("admin_dashboard"))
-        if request.method == "POST":
-            password = request.form.get("password") or ""
-            admin_env_password = os.getenv("ADMIN_PASSWORD", "")
-            if admin_env_password and password == admin_env_password:
-                session["admin_auth"] = True
-                flash("Admin session unlocked.", "success")
-                return redirect(url_for("admin_dashboard"))
-            flash("Invalid admin password.", "error")
-            return redirect(url_for("admin_login"))
-        return render_template("admin/login.html")
-
-    @app.route("/admin/logout")
-    @admin_required
-    def admin_logout():
-        session.pop("admin_auth", None)
-        flash("Admin session cleared.", "info")
-        return redirect(url_for("index"))
-
     @app.route("/admin")
     @admin_required
     def admin_dashboard():
@@ -1107,4 +1086,3 @@ def settings():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 8000)), debug=True)
-
