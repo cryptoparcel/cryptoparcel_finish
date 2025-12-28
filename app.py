@@ -370,7 +370,6 @@ def register_routes(app: Flask):
                 flash("Weight must be between 0 and 10,000 oz.", "error")
                 return redirect(url_for("create_label"))
 
-            # Address fields
             from_name = request.form.get("from_name", "").strip()
             from_address = request.form.get("from_address", "").strip()
             from_city = request.form.get("from_city", "").strip()
@@ -432,7 +431,6 @@ def register_routes(app: Flask):
                 flash("Label paid with wallet!", "success")
                 return redirect(url_for("order_detail", order_id=order.id))
 
-            # Crypto payment
             try:
                 invoice = create_nowpayments_invoice(order)
                 payment = Payment(
@@ -548,132 +546,6 @@ def settings():
             flash("Account deleted.", "info")
             return redirect(url_for("index"))
     return render_template("settings.html")
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.getenv("PORT", 8000)), debug=True)        run_auto_cleanup()
-        orders = Order.query.filter_by(user_id=current_user.id).order_by(Order.created_at.desc()).all()
-        total_spent = db.session.query(func.coalesce(func.sum(Order.amount_usd), 0.0)) \
-            .filter(Order.user_id == current_user.id, Order.status.in_(["paid", "confirmed", "finished"])) \
-            .scalar() or 0.0
-        return render_template("orders.html", orders=orders, total_spent=total_spent)
-
-    @app.route("/orders/<int:order_id>")
-    @login_required
-    def order_detail(order_id):
-        order = Order.query.get_or_404(order_id)
-        if order.user_id != current_user.id and not is_admin():
-            flash("Unauthorized", "error")
-            return redirect(url_for("orders"))
-        return render_template("order_detail.html", order=order)
-
-    @app.route("/wallet")
-    @login_required
-    def wallet():
-        from models import Payment, WalletLog
-        np_id = request.args.get("NP_id") or request.args.get("np_id")
-        if np_id:
-            try:
-                data = get_nowpayments_payment(np_id)
-                payment_status = (data.get("payment_status") or "").lower()
-                order_id = data.get("order_id") or ""
-                if order_id.startswith("topup-"):
-                    raw_id = order_id.split("topup-", 1)[1]
-                    if raw_id.isdigit():
-                        payment = Payment.query.get(int(raw_id))
-                        if payment and payment.type == "topup" and payment.status != "paid" and payment_status in {"finished", "confirmed", "paid"}:
-                            user = User.query.get(payment.user_id)
-                            if user:
-                                user.balance_usd = (user.balance_usd or 0.0) + payment.amount_usd
-                                log_wallet_change(user, payment.amount_usd, "Wallet top-up via NOWPayments")
-                            payment.status = "paid"
-                            db.session.commit()
-            except Exception as e:
-                current_app.logger.warning(f"NOWPayments return error: {e}")
-
-        topups = Payment.query.filter_by(user_id=current_user.id, type="topup").order_by(Payment.created_at.desc()).limit(20).all()
-        logs = WalletLog.query.filter_by(user_id=current_user.id).order_by(WalletLog.created_at.desc()).limit(20).all()
-        balance = current_user.balance_usd or 0.0
-        return render_template("wallet.html", balance=balance, topups=topups, logs=logs)
-
-    @app.route("/wallet/topup", methods=["GET", "POST"])
-    @login_required
-    def wallet_topup():
-        from models import Payment
-        if request.method == "POST":
-            try:
-                amount = float(request.form.get("amount_usd", "0"))
-            except ValueError:
-                flash("Invalid amount.", "error")
-                return redirect(url_for("wallet_topup"))
-            if not (1 <= amount <= 5000):
-                flash("Amount must be $1–$5000.", "error")
-                return redirect(url_for("wallet_topup"))
-            payment = Payment(user_id=current_user.id, type="topup", amount_usd=amount, currency="crypto", status="waiting", provider="nowpayments")
-            db.session.add(payment)
-            db.session.commit()
-            try:
-                invoice = create_topup_invoice(payment)
-                payment.provider_payment_id = str(invoice.get("payment_id") or invoice.get("id") or "")
-                db.session.commit()
-                return redirect(invoice.get("invoice_url"))
-            except Exception as e:
-                current_app.logger.error(f"Topup invoice error: {e}")
-                payment.status = "payment_error"
-                db.session.commit()
-                flash("Payment failed. Try again.", "error")
-                return redirect(url_for("wallet"))
-        return render_template("wallet_topup.html", balance=current_user.balance_usd or 0.0)
-
-    @app.route("/create-label", methods=["GET", "POST"])
-    @login_required
-    def create_label():
-        from models import Order, Payment, User
-        if request.method == "POST":
-            # [Your full create_label logic remains unchanged — it's perfect]
-            # ... (keeping your existing code here for brevity, but it's included in full below)
-            # Only change: keep as-is
-            pass  # Replace with your full existing create_label code
-
-        return render_template("create_label.html", balance=current_user.balance_usd or 0.0)
-
-    # Keep your full create_label POST logic here (unchanged) — it's too long to truncate
-
-    @app.route("/nowpayments/ipn", methods=["POST"])
-    @limiter.limit("30 per minute")
-    def nowpayments_ipn():
-        # [Your full IPN handler — unchanged]
-        pass
-
-    # Admin routes (kept for you only)
-    @app.route("/admin")
-    @admin_required
-    def admin_dashboard():
-        # [Your admin routes — unchanged]
-        pass
-
-    # ... all other admin routes unchanged
-
-    @app.route("/support", methods=["GET", "POST"])
-    def support():
-        # [Your support route — unchanged]
-        pass
-
-    @app.errorhandler(404)
-    def not_found(e):
-        return render_template("errors/404.html"), 404
-
-    @app.errorhandler(500)
-    def server_error(e):
-        current_app.logger.error(f"Server error: {e}")
-        return render_template("errors/500.html"), 500
-
-app = create_app()
-
-@app.route("/settings", methods=["GET", "POST"])
-@login_required
-def settings():
-    # [Your full settings route — unchanged]
-    pass
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 8000)), debug=True)
