@@ -356,15 +356,16 @@ def register_routes(app: Flask):
         from models import Order, Payment, User
         if request.method == "POST":
             payment_method = (request.form.get("payment_method") or "auto").lower()
-            service = request.form.get("service") or "USPS First-Class"
-            carrier_raw = (request.form.get("carrier") or "").strip().upper()
-            carrier = "USPS" if service.startswith("USPS") else "UPS" if service.startswith("UPS") else "FedEx" if service.startswith("FedEx") else carrier_raw or "Custom"
-            weight_lb_str = request.form.get("weight_lb") or ""
-            weight_oz_str = request.form.get("weight_oz") or ""
+            service = request.form.get("service") or ""
+            carrier = request.form.get("carrier", "").strip().upper() or "Custom"
+            weight_oz_str = request.form.get("weight_oz", "0")
             try:
-                weight_oz = float(weight_oz_str) if weight_oz_str else float(weight_lb_str) * 16.0 if weight_lb_str else 0.0
+                weight_oz = float(weight_oz_str)
             except ValueError:
                 flash("Invalid weight.", "error")
+                return redirect(url_for("create_label"))
+            if weight_oz <= 0:
+                flash("Weight must be greater than 0.", "error")
                 return redirect(url_for("create_label"))
 
             from_name = request.form.get("from_name", "").strip()
