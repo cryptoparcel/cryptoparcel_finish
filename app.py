@@ -366,9 +366,6 @@ def register_routes(app: Flask):
             except ValueError:
                 flash("Invalid weight.", "error")
                 return redirect(url_for("create_label"))
-            if weight_oz <= 0 or weight_oz > 10000:
-                flash("Weight must be between 0 and 10,000 oz.", "error")
-                return redirect(url_for("create_label"))
 
             from_name = request.form.get("from_name", "").strip()
             from_address = request.form.get("from_address", "").strip()
