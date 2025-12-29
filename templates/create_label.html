@@ -173,7 +173,7 @@
       <div class="cp-field-grid">
         <div class="cp-field-group">
           <label>Carrier</label>
-          <select id="carrier">
+          <select id="carrier" required>
             <option value="">Select carrier...</option>
             <option value="USPS">USPS</option>
             <option value="UPS">UPS</option>
@@ -181,31 +181,18 @@
           </select>
         </div>
         <div class="cp-field-group">
-          <label>Package Type</label>
-          <select id="package_type">
-            <option value="your_box">Your Own Box</option>
-            <option value="your_tube">Your Own Tube</option>
-            <option value="usps_flat_rate">USPS Flat Rate</option>
-            <option value="ups_box">UPS Box</option>
-            <option value="fedex_box">FedEx Box</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="cp-field-grid">
-        <div class="cp-field-group">
           <label>Service</label>
           <select name="service" id="service" required>
             <option value="">Select carrier first...</option>
           </select>
         </div>
+      </div>
+
+      <div class="cp-field-grid">
         <div class="cp-field-group">
           <label>Weight (oz)</label>
           <input type="number" step="0.1" id="weight_oz" required placeholder="16.0">
         </div>
-      </div>
-
-      <div class="cp-field-grid">
         <div class="cp-field-group">
           <label>Length (in)</label>
           <input type="number" step="0.1" id="length_in" placeholder="11.0">
@@ -220,7 +207,7 @@
         </div>
       </div>
 
-      <!-- Live Summary -->
+      <!-- Live Price Summary -->
       <div style="margin: 32px 0; padding: 20px; background: var(--cp-surface-soft); border-radius: var(--cp-radius-card); text-align: center;">
         <h2 style="margin: 0 0 12px;">Estimated Label Price</h2>
         <p style="font-size: 1.8rem; margin: 0; color: var(--cp-accent);">
@@ -239,7 +226,7 @@
 </section>
 
 <script>
-  (function() {
+  document.addEventListener('DOMContentLoaded', function() {
     const carrier = document.getElementById('carrier');
     const service = document.getElementById('service');
     const weightOz = document.getElementById('weight_oz');
@@ -247,9 +234,21 @@
     const btc = document.getElementById('price-btc');
 
     const services = {
-      USPS: ["Ground Advantage", "Priority Mail", "Priority Mail Express"],
-      UPS: ["Ground", "2nd Day Air", "Next Day Air"],
-      FedEx: ["Ground", "2Day", "Overnight"]
+      USPS: [
+        "Ground Advantage",
+        "Priority Mail",
+        "Priority Mail Express"
+      ],
+      UPS: [
+        "Ground",
+        "2nd Day Air",
+        "Next Day Air"
+      ],
+      FedEx: [
+        "Ground",
+        "2Day",
+        "Overnight"
+      ]
     };
 
     function updateServices() {
@@ -289,9 +288,9 @@
     service.addEventListener('change', updatePrice);
     weightOz.addEventListener('input', updatePrice);
 
-    // Initial
+    // Run on load
     updateServices();
     updatePrice();
-  })();
+  });
 </script>
 {% endblock %}
