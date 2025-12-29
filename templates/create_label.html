@@ -3,23 +3,29 @@
 {% block content %}
 <section class="cp-inner">
   <div class="container">
-    <h1 style="text-align: center; margin: 0 0 32px;">Create a Shipping Label</h1>
+    <div style="text-align: center; margin-bottom: 40px;">
+      <h1>Create a Shipping Label</h1>
+      <p>Private. Fast. Paid with crypto.</p>
+    </div>
 
     <form method="POST" class="cp-form-card">
       <!-- Shipped To -->
-      <h2 style="margin: 0 0 12px;">Shipped To</h2>
-      <div class="cp-field-group">
-        <label>Name</label>
-        <input type="text" name="to_name" required placeholder="Jane Smith">
+      <h2 style="margin-bottom: 16px;">Shipped To</h2>
+      <div class="cp-field-grid">
+        <div class="cp-field-group">
+          <label>Name</label>
+          <input type="text" name="to_name" required placeholder="Jane Smith">
+        </div>
+        <div class="cp-field-group">
+          <label>Street Address</label>
+          <input type="text" name="to_address" required placeholder="456 Oak Avenue">
+        </div>
+        <div class="cp-field-group">
+          <label>Apt/Suite (optional)</label>
+          <input type="text" name="to_street2" placeholder="Apt 4B">
+        </div>
       </div>
-      <div class="cp-field-group">
-        <label>Street Address</label>
-        <input type="text" name="to_address" required placeholder="456 Oak Avenue">
-      </div>
-      <div class="cp-field-group">
-        <label>Apt/Suite (optional)</label>
-        <input type="text" name="to_street2" placeholder="Apt 4B">
-      </div>
+
       <div class="cp-field-grid">
         <div class="cp-field-group">
           <label>City</label>
@@ -82,25 +88,28 @@
           </select>
         </div>
         <div class="cp-field-group">
-          <label>ZIP</label>
+          <label>ZIP Code</label>
           <input type="text" name="to_zip" required placeholder="10001">
         </div>
       </div>
 
       <!-- Shipped From -->
-      <h2 style="margin: 32px 0 12px;">Shipped From</h2>
-      <div class="cp-field-group">
-        <label>Name</label>
-        <input type="text" name="from_name" required placeholder="John Doe">
+      <h2 style="margin: 40px 0 16px;">Shipped From</h2>
+      <div class="cp-field-grid">
+        <div class="cp-field-group">
+          <label>Name</label>
+          <input type="text" name="from_name" required placeholder="John Doe">
+        </div>
+        <div class="cp-field-group">
+          <label>Street Address</label>
+          <input type="text" name="from_address" required placeholder="123 Main Street">
+        </div>
+        <div class="cp-field-group">
+          <label>Apt/Suite (optional)</label>
+          <input type="text" name="from_street2" placeholder="Suite 200">
+        </div>
       </div>
-      <div class="cp-field-group">
-        <label>Street Address</label>
-        <input type="text" name="from_address" required placeholder="123 Main Street">
-      </div>
-      <div class="cp-field-group">
-        <label>Apt/Suite (optional)</label>
-        <input type="text" name="from_street2" placeholder="Suite 200">
-      </div>
+
       <div class="cp-field-grid">
         <div class="cp-field-group">
           <label>City</label>
@@ -163,17 +172,17 @@
           </select>
         </div>
         <div class="cp-field-group">
-          <label>ZIP</label>
+          <label>ZIP Code</label>
           <input type="text" name="from_zip" required placeholder="90210">
         </div>
       </div>
 
       <!-- Package Details -->
-      <h2 style="margin: 32px 0 12px;">Package Details</h2>
+      <h2 style="margin: 40px 0 16px;">Package Details</h2>
       <div class="cp-field-grid">
         <div class="cp-field-group">
           <label>Carrier</label>
-          <select id="carrier" required>
+          <select id="carrier">
             <option value="">Select carrier...</option>
             <option value="USPS">USPS</option>
             <option value="UPS">UPS</option>
@@ -186,13 +195,13 @@
             <option value="">Select carrier first...</option>
           </select>
         </div>
-      </div>
-
-      <div class="cp-field-grid">
         <div class="cp-field-group">
           <label>Weight (oz)</label>
           <input type="number" step="0.1" id="weight_oz" required placeholder="16.0">
         </div>
+      </div>
+
+      <div class="cp-field-grid">
         <div class="cp-field-group">
           <label>Length (in)</label>
           <input type="number" step="0.1" id="length_in" placeholder="11.0">
@@ -207,18 +216,18 @@
         </div>
       </div>
 
-      <!-- Live Price Summary -->
-      <div style="margin: 32px 0; padding: 20px; background: var(--cp-surface-soft); border-radius: var(--cp-radius-card); text-align: center;">
-        <h2 style="margin: 0 0 12px;">Estimated Label Price</h2>
-        <p style="font-size: 1.8rem; margin: 0; color: var(--cp-accent);">
-          <strong id="price-usd">$0.00</strong> USD
+      <!-- Beautiful Price Card -->
+      <div style="margin: 40px 0; padding: 32px; background: var(--cp-surface-soft); border-radius: var(--cp-radius-card); box-shadow: var(--cp-shadow-subtle); text-align: center;">
+        <p style="font-size: 1rem; color: var(--cp-text-muted); margin: 0 0 8px;">Estimated Label Price</p>
+        <p style="font-size: 3rem; margin: 0; color: var(--cp-accent); font-weight: 800;">
+          <strong id="price-usd">$0.00</strong>
         </p>
-        <p style="margin: 12px 0 0; color: var(--cp-text-muted);">
-          ≈ <strong id="price-btc">—</strong> BTC
+        <p style="margin: 16px 0 0; color: var(--cp-text-muted);">
+          Paid with any crypto via your wallet or direct
         </p>
       </div>
 
-      <button type="submit" class="cp-btn-large" style="margin-top: 16px;">
+      <button type="submit" class="cp-btn-large">
         Continue to Payment
       </button>
     </form>
@@ -226,29 +235,16 @@
 </section>
 
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
+  document.addEventListener('DOMContentLoaded', () => {
     const carrier = document.getElementById('carrier');
     const service = document.getElementById('service');
     const weightOz = document.getElementById('weight_oz');
     const usd = document.getElementById('price-usd');
-    const btc = document.getElementById('price-btc');
 
     const services = {
-      USPS: [
-        "Ground Advantage",
-        "Priority Mail",
-        "Priority Mail Express"
-      ],
-      UPS: [
-        "Ground",
-        "2nd Day Air",
-        "Next Day Air"
-      ],
-      FedEx: [
-        "Ground",
-        "2Day",
-        "Overnight"
-      ]
+      USPS: ["Ground Advantage", "Priority Mail", "Priority Mail Express"],
+      UPS: ["Ground", "2nd Day Air", "Next Day Air"],
+      FedEx: ["Ground", "2Day", "Overnight"]
     };
 
     function updateServices() {
@@ -270,7 +266,6 @@
 
       if (!s || w <= 0) {
         usd.textContent = '$0.00';
-        btc.textContent = '—';
         return;
       }
 
@@ -279,8 +274,6 @@
       const priceUsd = Math.round((base + w * 0.10) * 100) / 100;
 
       usd.textContent = `$${priceUsd.toFixed(2)}`;
-      const priceBtc = (priceUsd / 95000).toFixed(6);
-      btc.textContent = `${priceBtc} BTC`;
     }
 
     carrier.addEventListener('change', updateServices);
@@ -288,7 +281,6 @@
     service.addEventListener('change', updatePrice);
     weightOz.addEventListener('input', updatePrice);
 
-    // Run on load
     updateServices();
     updatePrice();
   });
