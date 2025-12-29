@@ -173,7 +173,8 @@
       <div class="cp-field-grid">
         <div class="cp-field-group">
           <label>Carrier</label>
-          <select name="carrier" id="carrier">
+          <select id="carrier">
+            <option value="">Select carrier...</option>
             <option value="USPS">USPS</option>
             <option value="UPS">UPS</option>
             <option value="FedEx">FedEx</option>
@@ -249,12 +250,12 @@
 
 <script>
   (function() {
-    const carrierSelect = document.getElementById('carrier');
-    const serviceSelect = document.getElementById('service');
+    const carrier = document.getElementById('carrier');
+    const service = document.getElementById('service');
     const calcBtn = document.getElementById('calc-btn');
     const summary = document.getElementById('summary-box');
-    const usdEl = document.getElementById('price-usd');
-    const btcEl = document.getElementById('price-btc');
+    const usd = document.getElementById('price-usd');
+    const btc = document.getElementById('price-btc');
     const weightOz = document.getElementById('weight_oz');
 
     const services = {
@@ -275,35 +276,35 @@
       ]
     };
 
-    carrierSelect.addEventListener('change', () => {
-      const carrier = carrierSelect.value;
-      serviceSelect.innerHTML = '<option value="">Select service...</option>';
-      if (services[carrier]) {
-        services[carrier].forEach(s => {
+    carrier.addEventListener('change', () => {
+      const selected = carrier.value;
+      service.innerHTML = '<option value="">Select service...</option>';
+      if (services[selected]) {
+        services[selected].forEach(s => {
           const opt = document.createElement('option');
           opt.value = s;
           opt.textContent = s;
-          serviceSelect.appendChild(opt);
+          service.appendChild(opt);
         });
       }
     });
 
     calcBtn.addEventListener('click', () => {
       const w = parseFloat(weightOz.value) || 0;
-      const s = serviceSelect.value || '';
+      const s = service.value || '';
 
       if (!s || w <= 0) {
-        alert("Please select carrier, service, and enter weight");
+        alert("Select carrier, service, and enter weight > 0");
         return;
       }
 
       let base = 3.0;
       if (/express|overnight|priority|next day|2day/i.test(s)) base += 2.0;
-      const usd = Math.round((base + w * 0.10) * 100) / 100;
+      const priceUsd = Math.round((base + w * 0.10) * 100) / 100;
 
-      usdEl.textContent = `$${usd.toFixed(2)}`;
-      const btc = (usd / 95000).toFixed(6); // Approx BTC price
-      btcEl.textContent = `${btc} BTC`;
+      usd.textContent = `$${priceUsd.toFixed(2)}`;
+      const priceBtc = (priceUsd / 95000).toFixed(6);
+      btc.textContent = `${priceBtc} BTC`;
 
       summary.style.display = 'block';
       summary.scrollIntoView({ behavior: 'smooth' });
