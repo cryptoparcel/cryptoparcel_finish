@@ -185,16 +185,9 @@
           <select id="package_type">
             <option value="your_box">Your Own Box</option>
             <option value="your_tube">Your Own Tube</option>
-            <option value="usps_small_flat">USPS Small Flat Rate Box</option>
-            <option value="usps_medium_flat">USPS Medium Flat Rate Box</option>
-            <option value="usps_large_flat">USPS Large Flat Rate Box</option>
-            <option value="usps_flat_envelope">USPS Flat Rate Envelope</option>
-            <option value="ups_express_box">UPS Express Box</option>
-            <option value="ups_express_tube">UPS Express Tube</option>
-            <option value="fedex_small_box">FedEx Small Box</option>
-            <option value="fedex_medium_box">FedEx Medium Box</option>
-            <option value="fedex_envelope">FedEx Envelope</option>
-            <option value="fedex_tube">FedEx Tube</option>
+            <option value="usps_flat_rate">USPS Flat Rate</option>
+            <option value="ups_box">UPS Box</option>
+            <option value="fedex_box">FedEx Box</option>
           </select>
         </div>
       </div>
@@ -227,11 +220,8 @@
         </div>
       </div>
 
-      <button type="button" id="calc-btn" class="cp-btn-primary" style="margin: 24px 0;">
-        Calculate Label Price
-      </button>
-
-      <div id="summary-box" style="display:none; padding: 20px; background: var(--cp-surface-soft); border-radius: var(--cp-radius-card); text-align: center;">
+      <!-- Live Summary -->
+      <div style="margin: 32px 0; padding: 20px; background: var(--cp-surface-soft); border-radius: var(--cp-radius-card); text-align: center;">
         <h2 style="margin: 0 0 12px;">Estimated Label Price</h2>
         <p style="font-size: 1.8rem; margin: 0; color: var(--cp-accent);">
           <strong id="price-usd">$0.00</strong> USD
@@ -241,7 +231,7 @@
         </p>
       </div>
 
-      <button type="submit" class="cp-btn-large" id="submit-btn" style="margin-top: 24px;">
+      <button type="submit" class="cp-btn-large" style="margin-top: 16px;">
         Continue to Payment
       </button>
     </form>
@@ -252,31 +242,17 @@
   (function() {
     const carrier = document.getElementById('carrier');
     const service = document.getElementById('service');
-    const calcBtn = document.getElementById('calc-btn');
-    const summary = document.getElementById('summary-box');
+    const weightOz = document.getElementById('weight_oz');
     const usd = document.getElementById('price-usd');
     const btc = document.getElementById('price-btc');
-    const weightOz = document.getElementById('weight_oz');
 
     const services = {
-      USPS: [
-        "USPS Ground Advantage",
-        "USPS Priority Mail",
-        "USPS Priority Mail Express"
-      ],
-      UPS: [
-        "UPS Ground",
-        "UPS 2nd Day Air",
-        "UPS Next Day Air"
-      ],
-      FedEx: [
-        "FedEx Ground",
-        "FedEx 2Day",
-        "FedEx Overnight"
-      ]
+      USPS: ["Ground Advantage", "Priority Mail", "Priority Mail Express"],
+      UPS: ["Ground", "2nd Day Air", "Next Day Air"],
+      FedEx: ["Ground", "2Day", "Overnight"]
     };
 
-    carrier.addEventListener('change', () => {
+    function updateServices() {
       const selected = carrier.value;
       service.innerHTML = '<option value="">Select service...</option>';
       if (services[selected]) {
@@ -287,14 +263,15 @@
           service.appendChild(opt);
         });
       }
-    });
+    }
 
-    calcBtn.addEventListener('click', () => {
+    function updatePrice() {
       const w = parseFloat(weightOz.value) || 0;
       const s = service.value || '';
 
       if (!s || w <= 0) {
-        alert("Select carrier, service, and enter weight > 0");
+        usd.textContent = '$0.00';
+        btc.textContent = '—';
         return;
       }
 
@@ -305,10 +282,16 @@
       usd.textContent = `$${priceUsd.toFixed(2)}`;
       const priceBtc = (priceUsd / 95000).toFixed(6);
       btc.textContent = `${priceBtc} BTC`;
+    }
 
-      summary.style.display = 'block';
-      summary.scrollIntoView({ behavior: 'smooth' });
-    });
+    carrier.addEventListener('change', updateServices);
+    carrier.addEventListener('change', updatePrice);
+    service.addEventListener('change', updatePrice);
+    weightOz.addEventListener('input', updatePrice);
+
+    // Initial
+    updateServices();
+    updatePrice();
   })();
 </script>
 {% endblock %}
